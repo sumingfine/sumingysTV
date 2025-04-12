@@ -397,11 +397,6 @@
                 appendErrorMaxRetry: 5,  // 增加尝试次数
                 liveSyncDurationCount: 3,
                 liveDurationInfinity: false,
-                xhrSetup: function(xhr, url) {
-                    xhr.setRequestHeader('Referer', 'https://hhuus.com/');
-                    xhr.setRequestHeader('Origin', 'https://hhuus.com');
-                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36');
-                }
             };
             
             // 创建DPlayer实例
@@ -494,24 +489,9 @@
                                 if (data.fatal && !playbackStarted) {
                                     console.error('致命HLS错误:', data);
                                     
-                                    // 尝试恢复错误
-                                    switch(data.type) {
-                                        case Hls.ErrorTypes.NETWORK_ERROR:
-                                            console.log("尝试恢复网络错误");
-                                            hls.startLoad();
-                                            break;
-                                        case Hls.ErrorTypes.MEDIA_ERROR:
-                                            console.log("尝试恢复媒体错误");
-                                            hls.recoverMediaError();
-                                            break;
-                                        default:
-                                            // 仅在多次恢复尝试后显示错误
-                                            if (errorCount > 3 && !errorDisplayed) {
-                                                errorDisplayed = true;
-                                                showError('视频加载失败，可能是格式不兼容或源不可用');
-                                            }
-                                            break;
-                                    }
+                                    // 尝试通过代理加载
+                                    const proxyUrl = `/proxy/?m3u8=${encodeURIComponent(videoUrl)}`;
+                                    initPlayer(proxyUrl);
                                 }
                             });
                             

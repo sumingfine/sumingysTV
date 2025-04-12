@@ -157,6 +157,22 @@
                         </button>
                     </div>
                 </div>
+                
+                <!-- 新增：随机电影电视剧推荐区域 -->
+                <div id="randomMoviesArea" class="w-full max-w-5xl mt-10 hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold gradient-text">热门推荐</h3>
+                        <button onclick="fetchRandomMovies()" class="text-gray-400 hover:text-white text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            换一批
+                        </button>
+                    </div>
+                    <div id="randomMovies" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <!-- 这里会动态插入随机电影电视剧内容 -->
+                    </div>
+                </div>
             </div>
             
             <!-- 搜索结果：初始隐藏 -->

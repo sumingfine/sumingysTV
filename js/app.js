@@ -55,7 +55,92 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 设置事件监听器
     setupEventListeners();
+    
+    // 新增：加载首页随机电影电视剧推荐
+    fetchRandomMovies();
 });
+
+// 新增：获取随机电影电视剧函数
+async function fetchRandomMovies() {
+    try {
+        // 使用现有API随机搜索热门关键词
+        const keywords = ['电影', '电视剧', '动作', '科幻', '喜剧', '爱情', '动漫'];
+        const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+        
+        // 构建搜索URL，使用当前选择的API源
+        let searchUrl = `/api/search?wd=${encodeURIComponent(randomKeyword)}&source=${currentApiSource}`;
+        
+        // 如果是自定义源，添加自定义API参数
+        if (currentApiSource === 'custom' && customApiUrl) {
+            searchUrl += `&customApi=${encodeURIComponent(customApiUrl)}`;
+            if (customApiUrls.length > 1) {
+                searchUrl += '&multipleApis=true';
+            }
+        }
+        
+        const response = await fetch(searchUrl);
+        
+        if (!response.ok) {
+            throw new Error('获取随机电影失败');
+        }
+        
+        const data = await response.json();
+        
+        // 如果有搜索结果，展示在界面上
+        if (data.list && data.list.length > 0) {
+            // 随机打乱结果并取前12个
+            const shuffledResults = data.list.sort(() => 0.5 - Math.random()).slice(0, 12);
+            displayRandomMovies(shuffledResults);
+        }
+    } catch (error) {
+        console.error('获取随机电影出错:', error);
+    }
+}
+
+// 新增：展示随机电影电视剧函数
+function displayRandomMovies(movies) {
+    const randomMoviesArea = document.getElementById('randomMoviesArea');
+    
+    // 如果不存在该区域，则返回
+    if (!randomMoviesArea) return;
+    
+    // 显示区域
+    randomMoviesArea.classList.remove('hidden');
+    
+    // 获取结果容器
+    const resultsContainer = document.getElementById('randomMovies');
+    resultsContainer.innerHTML = '';
+    
+    // 遍历显示电影
+    movies.forEach(movie => {
+        // 过滤成人内容
+        if (localStorage.getItem('yellowFilterEnabled') === 'true' && 
+            (movie.type_name && (movie.type_name.includes('伦理片') || movie.type_name.includes('色情')))) {
+            return;
+        }
+        
+        // 创建电影卡片
+        const card = document.createElement('div');
+        card.className = 'bg-[#111] border border-[#333] rounded-lg overflow-hidden hover:border-white transition-colors cursor-pointer';
+        card.onclick = () => showDetails(movie.vod_id, movie.vod_name, movie.source_code);
+        
+        // 设置卡片内容
+        const safeImgUrl = movie.vod_pic && movie.vod_pic.startsWith('http') ? movie.vod_pic : 'https://placehold.co/300x450/1f1f1f/white?text=无封面';
+        
+        card.innerHTML = `
+            <div class="relative pb-[140%]">
+                <img src="${safeImgUrl}" alt="${movie.vod_name}" class="absolute top-0 left-0 w-full h-full object-cover">
+                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-2">
+                    <h3 class="text-white text-sm font-medium truncate">${movie.vod_name}</h3>
+                    <p class="text-gray-400 text-xs">${movie.type_name || '未知分类'}</p>
+                </div>
+                ${movie.source_name ? `<div class="absolute top-2 right-2 bg-[#222] px-2 py-1 rounded text-xs text-white">${movie.source_name}</div>` : ''}
+            </div>
+        `;
+        
+        resultsContainer.appendChild(card);
+    });
+}
 
 // 带有超时和缓存的站点可用性测试
 async function updateSiteStatusWithTest(source) {
@@ -279,6 +364,15 @@ function resetSearchArea() {
     document.getElementById('searchArea').classList.remove('mb-8');
     document.getElementById('resultsArea').classList.add('hidden');
     
+    // 显示随机电影区域
+    const randomMoviesArea = document.getElementById('randomMoviesArea');
+    if (randomMoviesArea && !randomMoviesArea.classList.contains('hidden')) {
+        randomMoviesArea.classList.remove('hidden');
+    } else {
+        // 如果随机电影区域是隐藏的，获取随机电影数据
+        fetchRandomMovies();
+    }
+    
     // 确保页脚正确显示，移除相对定位
     const footer = document.querySelector('.footer');
     if (footer) {
@@ -358,6 +452,12 @@ async function search() {
         document.getElementById('searchArea').classList.remove('flex-1');
         document.getElementById('searchArea').classList.add('mb-8');
         document.getElementById('resultsArea').classList.remove('hidden');
+        
+        // 隐藏随机电影区域
+        const randomMoviesArea = document.getElementById('randomMoviesArea');
+        if (randomMoviesArea) {
+            randomMoviesArea.classList.add('hidden');
+        }
         
         const resultsDiv = document.getElementById('results');
         

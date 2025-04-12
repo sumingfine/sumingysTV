@@ -50,7 +50,58 @@ export async function onRequest(context) {
         logDebug(`解析环境变量 USER_AGENTS_JSON 失败: ${e.message}，使用默认值`);
     }
     // --- 配置读取结束 ---
-
+    
+    // 新增：检查是否是通过特定参数直接请求m3u8内容
+    const m3u8Url = url.searchParams.get('m3u8');
+    if (m3u8Url) {
+        logDebug(`通过m3u8参数请求: ${m3u8Url}`);
+        
+        try {
+            // 设置特殊的头部，绕过视频源的防爬措施
+            const headers = new Headers({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+                'Accept': '*/*',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Referer': new URL(m3u8Url).origin,
+                'Origin': new URL(m3u8Url).origin
+            });
+            
+            // 直接请求目标URL
+            const response = await fetch(m3u8Url, { 
+                headers, 
+                redirect: 'follow'
+            });
+            
+            if (!response.ok) {
+                logDebug(`m3u8请求失败: ${response.status} ${response.statusText}`);
+                return createResponse(`代理请求失败: ${response.status} ${response.statusText}`, 500);
+            }
+            
+            // 读取内容
+            const content = await response.text();
+            
+            // 检查是否为有效的m3u8内容
+            if (!content.trim().startsWith('#EXTM3U')) {
+                logDebug(`返回的内容不是有效的m3u8格式: ${content.substring(0, 100)}`);
+                
+                // 如果内容包含HTML标签，可能是返回了错误页面
+                if (content.includes('<html') || content.includes('<!DOCTYPE')) {
+                    return createResponse(`代理收到HTML页面而非m3u8内容，可能需要特定的授权或Cookie`, 400);
+                }
+                
+                return createResponse(`代理收到的内容不是有效的m3u8格式`, 400);
+            }
+            
+            // 处理m3u8内容，重写URL
+            const processedContent = await processM3u8Content(m3u8Url, content, 0, env);
+            
+            // 返回处理后的m3u8内容
+            return createM3u8Response(processedContent);
+        } catch (error) {
+            logDebug(`处理m3u8参数请求时出错: ${error.message}`);
+            return createResponse(`代理处理m3u8请求时出错: ${error.message}`, 500);
+        }
+    }
 
     // --- 辅助函数 ---
 

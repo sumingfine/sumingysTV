@@ -266,6 +266,9 @@
             // 获取广告过滤设置
             adFilteringEnabled = localStorage.getItem(PLAYER_CONFIG.adFilteringStorage) !== 'false'; // 默认为true
             
+            // 初始化代理域名列表（如果不存在）
+            initProxyDomains();
+            
             // 监听自动连播开关变化
             document.getElementById('autoplayToggle').addEventListener('change', function(e) {
                 autoplayEnabled = e.target.checked;
@@ -369,7 +372,11 @@
         // 初始化播放器
         function initPlayer(videoUrl) {
             if (!videoUrl) return;
-
+            
+            // 检查URL是否需要通过代理处理
+            const useProxy = shouldUseProxy(videoUrl);
+            const finalUrl = useProxy ? `/proxy/?m3u8=${encodeURIComponent(videoUrl)}` : videoUrl;
+            
             // 配置HLS.js选项
             const hlsConfig = {
                 debug: false,
@@ -384,9 +391,9 @@
                 fragLoadingMaxRetry: 6,
                 fragLoadingMaxRetryTimeout: 64000,
                 fragLoadingRetryDelay: 1000,
-                manifestLoadingMaxRetry: 3,
+                manifestLoadingMaxRetry: 6,  // 增加重试次数
                 manifestLoadingRetryDelay: 1000,
-                levelLoadingMaxRetry: 4,
+                levelLoadingMaxRetry: 6,  // 增加重试次数
                 levelLoadingRetryDelay: 1000,
                 startLevel: -1,
                 abrEwmaDefaultEstimate: 500000,
@@ -394,10 +401,23 @@
                 abrBandWidthUpFactor: 0.7,
                 abrMaxWithRealBitrate: true,
                 stretchShortVideoTrack: true,
-                appendErrorMaxRetry: 5,  // 增加尝试次数
+                appendErrorMaxRetry: 5,
                 liveSyncDurationCount: 3,
-                liveDurationInfinity: false
+                liveDurationInfinity: false,
+                // 通用请求头设置，适用于所有视频源
+                xhrSetup: function(xhr, url) {
+                    // 获取目标域名用于Referer
+                    const targetDomain = extractDomain(url);
+                    if (targetDomain) {
+                        xhr.setRequestHeader('Referer', `https://${targetDomain}/`);
+                        xhr.setRequestHeader('Origin', `https://${targetDomain}`);
+                    }
+                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36');
+                }
             };
+
+            // 实时监测到是否使用了代理
+            console.log(`播放地址: ${finalUrl}${useProxy ? ' (通过代理)' : ''}`);
             
             // 创建DPlayer实例
             dp = new DPlayer({
@@ -411,7 +431,7 @@
                 mutex: true,
                 volume: 0.7,
                 video: {
-                    url: videoUrl,
+                    url: finalUrl,
                     type: 'hls',
                     pic: '',
                     customType: {
@@ -500,6 +520,15 @@
                                             hls.recoverMediaError();
                                             break;
                                         default:
+                                            // 如果EXTM3U错误或清单解析错误，且还未使用代理
+                                            if ((data.details === 'manifestParsingError' || data.reason === 'no EXTM3U delimiter') 
+                                                && !useProxy && !errorDisplayed) {
+                                                errorDisplayed = true;
+                                                console.log("检测到格式错误，尝试通过代理加载");
+                                                retryWithProxy(videoUrl);
+                                                return;
+                                            }
+                                            
                                             // 仅在多次恢复尝试后显示错误
                                             if (errorCount > 3 && !errorDisplayed) {
                                                 errorDisplayed = true;
@@ -532,13 +561,45 @@
                 setupProgressBarPreciseClicks();
             });
 
-            dp.on('error', function() {
+            dp.on('error', function(e) {
+                console.error('播放器错误:', e);
+                
                 // 检查视频是否已经在播放
                 if (dp.video && dp.video.currentTime > 1) {
-                    console.log('发生错误，但视频已在播放中，忽略');
+                    console.log('发生错误，但视频已在播放中，尝试恢复');
+                    
+                    // 尝试恢复播放
+                    dp.notice('视频播放出现问题，正在尝试恢复...');
+                    
+                    // 尝试切换回原播放源
+                    setTimeout(() => {
+                        const currentUrl = currentEpisodes[currentEpisodeIndex];
+                        if (currentUrl) {
+                            dp.notice('正在重新加载视频...');
+                            dp.switchVideo({
+                                url: currentUrl,
+                                type: 'hls'
+                            });
+                            dp.play();
+                        }
+                    }, 2000);
+                    
                     return;
                 }
-                showError('视频播放失败，请检查视频源或网络连接');
+                
+                // 如果是格式错误且未使用代理，尝试通过代理加载
+                if (!useProxy && e && (e.toString().includes('EXTM3U delimiter') || e.toString().includes('format error'))) {
+                    console.log('直接加载失败，尝试通过代理：', videoUrl);
+                    retryWithProxy(videoUrl);
+                    return;
+                }
+                
+                // 如果已经是通过代理加载还失败，显示错误
+                if (useProxy) {
+                    showError('视频源无法访问，请尝试其他视频源');
+                } else {
+                    showError('视频播放失败，请检查视频源或网络连接');
+                }
             });
             
             // 添加seeking和seeked事件监听器，以检测用户是否在拖动进度条
@@ -648,6 +709,18 @@
                             return onSuccess(response, stats, context);
                         };
                     }
+                    
+                    // 添加请求头设置
+                    if (context.xhr) {
+                        // 获取目标域名用于Referer
+                        const targetDomain = extractDomain(context.url);
+                        if (targetDomain) {
+                            context.xhr.setRequestHeader('Referer', `https://${targetDomain}/`);
+                            context.xhr.setRequestHeader('Origin', `https://${targetDomain}`);
+                        }
+                        context.xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36');
+                    }
+                    
                     // 执行原始load方法
                     load(context, config, callbacks);
                 };
@@ -925,6 +998,99 @@
             
             e.stopPropagation();
             dp.seek(clickTime);
+        }
+
+        // 新增：判断是否应该使用代理
+        function shouldUseProxy(url) {
+            // 如果URL已经是代理格式，直接返回true
+            if (url.startsWith('/proxy/') || url.includes('/proxy/?m3u8=')) {
+                return true;
+            }
+            
+            // 从localStorage获取需要通过代理访问的域名列表
+            let proxyDomains = [];
+            try {
+                const savedDomains = localStorage.getItem('proxyDomains');
+                if (savedDomains) {
+                    proxyDomains = JSON.parse(savedDomains);
+                }
+            } catch (e) {
+                console.error('解析代理域名列表出错:', e);
+            }
+            
+            // 检查URL是否包含需要代理的域名
+            const domain = extractDomain(url);
+            if (domain && proxyDomains.includes(domain)) {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // 新增：提取域名
+        function extractDomain(url) {
+            try {
+                const parsedUrl = new URL(url);
+                return parsedUrl.hostname;
+            } catch (e) {
+                console.error('解析URL失败:', e);
+                return null;
+            }
+        }
+        
+        // 新增：通过代理重试加载
+        function retryWithProxy(videoUrl) {
+            showError('视频加载失败：尝试通过代理访问...');
+            
+            // 将当前域名添加到需要代理的列表中
+            const domain = extractDomain(videoUrl);
+            if (domain) {
+                let proxyDomains = [];
+                try {
+                    const savedDomains = localStorage.getItem('proxyDomains');
+                    if (savedDomains) {
+                        proxyDomains = JSON.parse(savedDomains);
+                    }
+                    if (!proxyDomains.includes(domain)) {
+                        proxyDomains.push(domain);
+                        localStorage.setItem('proxyDomains', JSON.stringify(proxyDomains));
+                    }
+                } catch (e) {
+                    console.error('更新代理域名列表出错:', e);
+                }
+            }
+            
+            // 使用代理URL
+            const proxyUrl = `/proxy/?m3u8=${encodeURIComponent(videoUrl)}`;
+            console.log('使用代理URL:', proxyUrl);
+            
+            // 重新初始化播放器
+            setTimeout(() => {
+                initPlayer(proxyUrl);
+            }, 1000);
+        }
+
+        // 初始化代理域名列表
+        function initProxyDomains() {
+            try {
+                // 检查localStorage中是否已存在代理域名列表
+                if (!localStorage.getItem('proxyDomains')) {
+                    // 设置一些已知需要代理的视频源域名
+                    const defaultProxyDomains = [
+                        'play.hhuus.com',
+                        'vip.ffzy',
+                        'vip.lz',
+                        'm3u8.tianzhen',
+                        'new.qqaku',
+                        'v.x-99.com',
+                        'm3u8.pvnamed'
+                    ];
+                    localStorage.setItem('proxyDomains', JSON.stringify(defaultProxyDomains));
+                    console.log('已初始化默认代理域名列表');
+                }
+            } catch (e) {
+                console.error('初始化代理域名列表出错:', e);
+            }
         }
     </script>
 </body>

@@ -373,11 +373,11 @@
         function initPlayer(videoUrl) {
             if (!videoUrl) return;
             
-            // 检查URL是否需要通过代理处理
+            // 检查URL是否需要通过代理处理 - 现在强制ffzy域名使用代理
             const useProxy = shouldUseProxy(videoUrl);
             const finalUrl = useProxy ? `/proxy/?m3u8=${encodeURIComponent(videoUrl)}` : videoUrl;
             
-            // 配置HLS.js选项
+            // 配置HLS.js选项 - 移除无效的请求头设置
             const hlsConfig = {
                 debug: false,
                 loader: adFilteringEnabled ? CustomHlsJsLoader : Hls.DefaultConfig.loader,
@@ -391,9 +391,9 @@
                 fragLoadingMaxRetry: 6,
                 fragLoadingMaxRetryTimeout: 64000,
                 fragLoadingRetryDelay: 1000,
-                manifestLoadingMaxRetry: 6,  // 增加重试次数
+                manifestLoadingMaxRetry: 6,
                 manifestLoadingRetryDelay: 1000,
-                levelLoadingMaxRetry: 6,  // 增加重试次数
+                levelLoadingMaxRetry: 6,
                 levelLoadingRetryDelay: 1000,
                 startLevel: -1,
                 abrEwmaDefaultEstimate: 500000,
@@ -403,17 +403,8 @@
                 stretchShortVideoTrack: true,
                 appendErrorMaxRetry: 5,
                 liveSyncDurationCount: 3,
-                liveDurationInfinity: false,
-                // 通用请求头设置，适用于所有视频源
-                xhrSetup: function(xhr, url) {
-                    // 获取目标域名用于Referer
-                    const targetDomain = extractDomain(url);
-                    if (targetDomain) {
-                        xhr.setRequestHeader('Referer', `https://${targetDomain}/`);
-                        xhr.setRequestHeader('Origin', `https://${targetDomain}`);
-                    }
-                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36');
-                }
+                liveDurationInfinity: false
+                // 移除xhrSetup以避免"Refused to set unsafe header"错误
             };
 
             // 实时监测到是否使用了代理
@@ -520,11 +511,10 @@
                                             hls.recoverMediaError();
                                             break;
                                         default:
-                                            // 如果EXTM3U错误或清单解析错误，且还未使用代理
-                                            if ((data.details === 'manifestParsingError' || data.reason === 'no EXTM3U delimiter') 
-                                                && !useProxy && !errorDisplayed) {
+                                            // 任何不可恢复的错误都尝试使用代理
+                                            if (!useProxy) {
                                                 errorDisplayed = true;
-                                                console.log("检测到格式错误，尝试通过代理加载");
+                                                console.log("检测到不可恢复的错误，尝试通过代理加载");
                                                 retryWithProxy(videoUrl);
                                                 return;
                                             }
@@ -710,16 +700,7 @@
                         };
                     }
                     
-                    // 添加请求头设置
-                    if (context.xhr) {
-                        // 获取目标域名用于Referer
-                        const targetDomain = extractDomain(context.url);
-                        if (targetDomain) {
-                            context.xhr.setRequestHeader('Referer', `https://${targetDomain}/`);
-                            context.xhr.setRequestHeader('Origin', `https://${targetDomain}`);
-                        }
-                        context.xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36');
-                    }
+                    // 移除不被浏览器允许的请求头设置
                     
                     // 执行原始load方法
                     load(context, config, callbacks);
@@ -850,31 +831,8 @@
             newUrl.searchParams.set('url', url);
             window.history.pushState({}, '', newUrl);
             
-            // 更新播放器
-            if (dp) {
-                try {
-                    dp.switchVideo({
-                        url: url,
-                        type: 'hls'
-                    });
-                    
-                    // 确保播放开始
-                    const playPromise = dp.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(error => {
-                            console.warn('播放失败，尝试重新初始化:', error);
-                            // 如果切换视频失败，重新初始化播放器
-                            initPlayer(url);
-                        });
-                    }
-                } catch (e) {
-                    console.error('切换视频出错，尝试重新初始化:', e);
-                    // 如果出错，重新初始化播放器
-                    initPlayer(url);
-                }
-            } else {
-                initPlayer(url);
-            }
+            // 重新初始化播放器，确保自动处理代理
+            initPlayer(url);
             
             // 更新UI
             updateEpisodeInfo();
@@ -1007,6 +965,11 @@
                 return true;
             }
             
+            // 检查是否含有ffzy域名，ffzy域名必须使用代理
+            if (url.includes('ffzy') || url.includes('vip.') || url.includes('play.')) {
+                return true;
+            }
+            
             // 从localStorage获取需要通过代理访问的域名列表
             let proxyDomains = [];
             try {
@@ -1079,11 +1042,20 @@
                     const defaultProxyDomains = [
                         'play.hhuus.com',
                         'vip.ffzy',
+                        'vip.ffzy-play',
+                        'vip.ffzy-play6.com',
                         'vip.lz',
+                        'vip.lzcdn',
                         'm3u8.tianzhen',
                         'new.qqaku',
                         'v.x-99.com',
-                        'm3u8.pvnamed'
+                        'm3u8.pvnamed',
+                        'v3.huoshanvod.com',
+                        'v3.douyinvod.com',
+                        'bjm3u8.com',
+                        'ukzy.ukubf4.com',
+                        'hd.lz-cdn',
+                        'v.ziyuanm3u8.com'
                     ];
                     localStorage.setItem('proxyDomains', JSON.stringify(defaultProxyDomains));
                     console.log('已初始化默认代理域名列表');

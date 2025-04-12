@@ -68,10 +68,6 @@ const API_SITES = {
         name: '豆瓣资源',
         // detail: 'https://dbzy.com'
     },
-    hhzy: {
-        api: 'https://www.haohuazy.com',
-        name: '豪华资源',
-    },
     fqzy: {
         api: 'https://fqzy2.me',
         name: '番茄9kg资源',

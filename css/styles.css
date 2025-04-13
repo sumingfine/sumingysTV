@@ -16,16 +16,7 @@
 }
 
 .page-bg {
-    background: linear-gradient(180deg, var(--page-gradient-start), var(--page-gradient-end));
-    min-height: 100vh;
-    /* 柔和赛博点状背景 */
-    background-image: 
-        linear-gradient(180deg, var(--page-gradient-start), var(--page-gradient-end)),
-        radial-gradient(circle at 25px 25px, rgba(0, 204, 255, 0.04) 2px, transparent 3px),
-        radial-gradient(circle at 75px 75px, rgba(255, 60, 120, 0.02) 1px, transparent 2px),
-        radial-gradient(circle at 50px 50px, rgba(150, 255, 250, 0.015) 1px, transparent 2px);
-    background-blend-mode: normal;
-    background-size: cover, 100px 100px, 50px 50px, 75px 75px;
+    background: #0f1622;
 }
 
 button, .card-hover {
@@ -53,9 +44,8 @@ button, .card-hover {
 }
 
 .card-hover:hover {
-    border-color: var(--card-hover-border);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+    border-color: #00ccff;
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
 }
 
 .card-hover:hover::before {
@@ -63,16 +53,15 @@ button, .card-hover {
 }
 
 .gradient-text {
-    background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+    background: linear-gradient(to right, #00ccff, #cc66ff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .settings-panel {
     transform: translateX(100%);
-    transition: transform 0.3s ease;
-    background: linear-gradient(135deg, var(--page-gradient-end), var(--page-gradient-start));
-    border-left: 1px solid var(--primary-color);
+    transition: transform 0.3s ease-in-out;
+    overflow-y: auto;
 }
 
 .settings-panel.show {
@@ -89,23 +78,21 @@ button, .card-hover {
 }
 
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #111;
-    border-radius: 4px;
+    background: #0f1622;
 }
 
 ::-webkit-scrollbar-thumb {
     background: #333;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+    border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #444;
+    background: #555;
 }
 
 * {
@@ -251,4 +238,22 @@ body {
 
 #adFilterToggle:checked ~ .toggle-dot {
     box-shadow: 0 2px 4px rgba(0, 204, 255, 0.3);
+}
+
+/* 行数限制 */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 开关样式 */
+input:checked + .toggle-bg {
+    background-color: #00ccff;
+}
+
+input:checked + .toggle-bg + .toggle-dot,
+input:checked ~ .toggle-dot {
+    transform: translateX(1.5rem);
 }

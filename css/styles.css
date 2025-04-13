@@ -1,8 +1,8 @@
 :root {
     /* 简约主题配色方案 */
-    --primary-color: #4a90e2;       /* 简约蓝色主色调 */
+    --primary-color: #fff;       /* 简约白色主色调 */
     --primary-light: #6ba5e9;       /* 浅蓝色变体 */
-    --secondary-color: #f5f5f5;     /* 浅灰背景色 */
+    --secondary-color: #fff;     /* 浅灰白色 */
     --accent-color: #e74c3c;        /* 简约红色强调色 */
     --text-color: #333333;          /* 深灰色文本 */
     --text-muted: #777777;          /* 中灰色次级文本 */

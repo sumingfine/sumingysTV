@@ -453,23 +453,53 @@ async function handleAggregatedSearch(searchQuery) {
 // 新增：处理多个自定义API源的聚合搜索
 async function handleMultipleCustomSearch(searchQuery, customApiUrls) {
     // 解析自定义API列表
-    const apiUrls = customApiUrls.split(CUSTOM_API_CONFIG.separator)
-        .map(url => url.trim())
-        .filter(url => url.length > 0 && /^https?:\/\//.test(url))
-        .slice(0, CUSTOM_API_CONFIG.maxSources);
+    const apiList = [];
     
-    if (apiUrls.length === 0) {
+    // 处理自定义API URL - 可能包含名称
+    customApiUrls.split(CUSTOM_API_CONFIG.separator).forEach(item => {
+        item = item.trim();
+        if (!item) return;
+        
+        let name = null;
+        let url = null;
+        
+        // 检查是否包含名称分隔符
+        if (item.includes(CUSTOM_API_CONFIG.nameSeparator)) {
+            // 分离名称和URL
+            const parts = item.split(CUSTOM_API_CONFIG.nameSeparator, 2);
+            if (parts.length === 2) {
+                name = parts[0].trim();
+                url = parts[1].trim();
+            }
+        } else {
+            // 只有URL
+            url = item;
+        }
+        
+        // 验证URL格式
+        if (url && /^https?:\/\//.test(url)) {
+            apiList.push({
+                name: name || `${CUSTOM_API_CONFIG.namePrefix}${apiList.length + 1}`,
+                url: url
+            });
+        }
+    });
+    
+    // 限制最大源数量
+    const validApiList = apiList.slice(0, CUSTOM_API_CONFIG.maxSources);
+    
+    if (validApiList.length === 0) {
         throw new Error('没有提供有效的自定义API地址');
     }
     
     // 为每个API创建搜索请求
-    const searchPromises = apiUrls.map(async (apiUrl, index) => {
+    const searchPromises = validApiList.map(async (api, index) => {
         try {
-            const fullUrl = `${apiUrl}${API_CONFIG.search.path}${encodeURIComponent(searchQuery)}`;
+            const fullUrl = `${api.url}${API_CONFIG.search.path}${encodeURIComponent(searchQuery)}`;
             
             // 使用Promise.race添加超时处理
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error(`自定义API ${index+1} 搜索超时`)), 8000)
+                setTimeout(() => reject(new Error(`${api.name} 搜索超时`)), 8000)
             );
             
             const fetchPromise = fetch(PROXY_URL + encodeURIComponent(fullUrl), {
@@ -479,26 +509,26 @@ async function handleMultipleCustomSearch(searchQuery, customApiUrls) {
             const response = await Promise.race([fetchPromise, timeoutPromise]);
             
             if (!response.ok) {
-                throw new Error(`自定义API ${index+1} 请求失败: ${response.status}`);
+                throw new Error(`${api.name} 请求失败: ${response.status}`);
             }
             
             const data = await response.json();
             
             if (!data || !Array.isArray(data.list)) {
-                throw new Error(`自定义API ${index+1} 返回的数据格式无效`);
+                throw new Error(`${api.name} 返回的数据格式无效`);
             }
             
             // 为搜索结果添加源信息
             const results = data.list.map(item => ({
                 ...item,
-                source_name: `${CUSTOM_API_CONFIG.namePrefix}${index+1}`,
+                source_name: api.name, // 使用自定义名称
                 source_code: 'custom',
-                api_url: apiUrl // 保存API URL以便详情获取
+                api_url: api.url // 保存API URL以便详情获取
             }));
             
             return results;
         } catch (error) {
-            console.warn(`自定义API ${index+1} 搜索失败:`, error);
+            console.warn(`${validApiList[index].name} 搜索失败:`, error);
             return []; // 返回空数组表示该源搜索失败
         }
     });

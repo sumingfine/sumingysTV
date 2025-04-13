@@ -14,9 +14,36 @@ let episodesReversed = false;
 let customApiUrls = [];
 function parseCustomApiUrls() {
     if (!customApiUrl) return [];
+    
+    // 解析带有名称的API格式 "名称|URL"
     return customApiUrl.split(CUSTOM_API_CONFIG.separator)
-        .map(url => url.trim())
-        .filter(url => url.length > 0)
+        .map(item => {
+            item = item.trim();
+            if (!item) return null;
+            
+            // 检查是否包含名称分隔符
+            if (item.includes(CUSTOM_API_CONFIG.nameSeparator)) {
+                // 分离名称和URL
+                const [name, url] = item.split(CUSTOM_API_CONFIG.nameSeparator, 2);
+                if (name && url && url.trim().length > 0) {
+                    return {
+                        name: name.trim(),
+                        url: url.trim()
+                    };
+                }
+            }
+            
+            // 如果没有名称分隔符，则只有URL
+            if (/^https?:\/\/.+/.test(item)) {
+                return {
+                    name: `${CUSTOM_API_CONFIG.namePrefix}${Math.floor(Math.random() * 1000)}`,
+                    url: item
+                };
+            }
+            
+            return null;
+        })
+        .filter(item => item !== null)
         .slice(0, CUSTOM_API_CONFIG.maxSources);
 }
 
@@ -216,7 +243,12 @@ async function updateSiteStatusWithTest(source) {
 }
 
 // 新增：测试单个自定义API URL
-async function testCustomApiUrl(url) {
+async function testCustomApiUrl(apiItem) {
+    if (!apiItem) return false;
+    
+    // 如果是对象，提取URL，否则直接使用
+    const url = typeof apiItem === 'object' ? apiItem.url : apiItem;
+    
     if (!url) return false;
     
     // 验证URL格式
@@ -406,11 +438,28 @@ async function search() {
                 return;
             }
             
-            // 检查是否有多个API (存在逗号)
-            if (customApiUrl.includes(CUSTOM_API_CONFIG.separator)) {
-                apiParams = '&customApi=' + encodeURIComponent(customApiUrl) + '&source=custom&multipleApis=true';
+            // 解析自定义API（可能包含名称）
+            customApiUrls = parseCustomApiUrls();
+            
+            if (customApiUrls.length === 0) {
+                showToast('没有有效的自定义API地址', 'warning');
+                hideLoading();
+                return;
+            }
+            
+            // 准备API参数 - 需要把对象转回字符串格式
+            const apiString = customApiUrls.map(item => {
+                if (typeof item === 'object' && item.url) {
+                    return item.url;
+                }
+                return item;
+            }).join(CUSTOM_API_CONFIG.separator);
+            
+            // 检查是否有多个API
+            if (customApiUrls.length > 1) {
+                apiParams = '&customApi=' + encodeURIComponent(apiString) + '&source=custom&multipleApis=true';
             } else {
-                apiParams = '&customApi=' + encodeURIComponent(customApiUrl) + '&source=custom';
+                apiParams = '&customApi=' + encodeURIComponent(customApiUrls[0].url) + '&source=custom';
             }
         } else {
             apiParams = '&source=' + currentApiSource;
@@ -584,9 +633,12 @@ async function showDetails(id, vod_name, sourceCode = currentApiSource) {
                 apiParams = '&customApi=' + encodeURIComponent(apiUrl);
             } else {
                 // 回退到使用第一个可用的自定义API
-                const urls = parseCustomApiUrls();
-                if (urls.length > 0) {
-                    apiParams = '&customApi=' + encodeURIComponent(urls[0]);
+                const customApis = parseCustomApiUrls();
+                if (customApis.length > 0) {
+                    // 获取URL (可能是对象或字符串)
+                    const firstApi = customApis[0];
+                    const url = typeof firstApi === 'object' ? firstApi.url : firstApi;
+                    apiParams = '&customApi=' + encodeURIComponent(url);
                 } else {
                     showToast('无可用的自定义API', 'error');
                     hideLoading();

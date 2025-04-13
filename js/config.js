@@ -14,7 +14,7 @@ const MAX_HISTORY_ITEMS = 5;
 
 // 网站信息配置
 const SITE_CONFIG = {
-    name: 'LibreTV',
+    name: '宿命影视',
     url: 'https://www.sumingys.top', // 您可以改成您的实际部署地址
     description: '免费在线视频搜索与观看平台',
     logo: 'https://images.icon-icons.com/38/PNG/512/retrotv_5520.png',
@@ -142,9 +142,10 @@ const SECURITY_CONFIG = {
 // 添加多个自定义API源的配置
 const CUSTOM_API_CONFIG = {
     separator: ',',           // 分隔符
-    maxSources: 5,            // 最大允许的自定义源数量
+    nameSeparator: '|',       // 名称和URL分隔符
+    maxSources: 10,            // 最大允许的自定义源数量
     testTimeout: 5000,        // 测试超时时间(毫秒) - 用于 app.js 的 testSiteAvailability
-    namePrefix: '自定义-',    // 自定义源名称前缀 (修改为中文)
+    namePrefix: '自定义-',    // 自定义源名称前缀 (当没有提供自定义名称时使用)
     validateUrl: true,        // 验证URL格式 (app.js 中使用)
     cacheResults: true,       // 缓存测试结果 (app.js 中使用 localStorage)
     cacheExpiry: 5184000000   // 缓存过期时间(2个月) (app.js 中使用)

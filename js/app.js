@@ -121,7 +121,7 @@ function displayRandomMovies(movies) {
         
         // 创建电影卡片
         const card = document.createElement('div');
-        card.className = 'bg-[bg-black/65] border border-[#333] rounded-lg overflow-hidden hover:border-white transition-colors cursor-pointer';
+        card.className = 'bg-black/55 border border-[#333] rounded-lg overflow-hidden hover:border-white transition-colors cursor-pointer';
         card.onclick = () => showDetails(movie.vod_id, movie.vod_name, movie.source_code);
         
         // 设置卡片内容
@@ -130,7 +130,7 @@ function displayRandomMovies(movies) {
         card.innerHTML = `
             <div class="relative pb-[140%]">
                 <img src="${safeImgUrl}" alt="${movie.vod_name}" class="absolute top-0 left-0 w-full h-full object-cover">
-                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-2">
+                <div class="absolute bottom-0 left-0 right-0 bg-black/55 bg-opacity-70 p-2">
                     <h3 class="text-white text-sm font-medium truncate">${movie.vod_name}</h3>
                     <p class="text-gray-400 text-xs">${movie.type_name || '未知分类'}</p>
                 </div>
@@ -497,7 +497,7 @@ async function search() {
             
             // 不同的布局设计 - 桌面端使用横向布局，减小卡片尺寸
             return `
-                <div class="card-hover bg-[bg-black/65] rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-[1.02] h-full" 
+                <div class="card-hover bg-black/55 rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-[1.02] h-full" 
                      onclick="showDetails('${safeId}','${safeName}','${sourceCode}')" ${apiUrlAttr}>
                     <div class="md:flex">
                         <!-- 封面图区域 - 调整高度更紧凑 -->
@@ -508,7 +508,7 @@ async function search() {
                                      class="w-full h-full object-cover transition-transform hover:scale-110" 
                                      onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450?text=无封面'; this.classList.add('object-contain');" 
                                      loading="lazy">
-                                <div class="absolute inset-0 bg-gradient-to-t from-[bg-black/65] to-transparent opacity-60"></div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-bg-black/55 to-transparent opacity-60"></div>
                             </div>
                         </div>` : ''}
                         

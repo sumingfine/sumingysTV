@@ -60,17 +60,17 @@ async function handleApiRequest(url) {
                 // 添加源信息到每个结果
                 data.list.forEach(item => {
                     if (source === 'custom') {
-                        // 检查是否有自定义名称
+                        // 尝试从localStorage获取自定义名称
                         let apiName = '自定义源';
-                        if (customApi) {
-                            // 检查是否包含名称分隔符
-                            if (customApi.includes(CUSTOM_API_CONFIG.nameSeparator)) {
-                                const parts = customApi.split(CUSTOM_API_CONFIG.nameSeparator, 2);
-                                if (parts.length === 2 && parts[0].trim()) {
-                                    apiName = parts[0].trim();
-                                }
+                        try {
+                            const displayNames = JSON.parse(localStorage.getItem('customApiDisplayNames') || '{}');
+                            if (customApi && displayNames[customApi]) {
+                                apiName = displayNames[customApi];
                             }
+                        } catch (e) {
+                            console.error('解析自定义API名称失败', e);
                         }
+                        
                         item.source_name = apiName;
                         item.source_code = source;
                         item.api_url = customApi;
@@ -659,10 +659,21 @@ async function testSiteAvailability(source) {
             
             // 处理可能包含名称的URL
             let apiUrl = customApiUrl;
+            // 尝试提取URL部分，兼容旧格式
             if (customApiUrl.includes(CUSTOM_API_CONFIG.nameSeparator)) {
                 const parts = customApiUrl.split(CUSTOM_API_CONFIG.nameSeparator, 2);
                 if (parts.length === 2) {
                     apiUrl = parts[1].trim();
+                }
+            } else {
+                // 尝试解析customApiUrls
+                try {
+                    const urls = JSON.parse(localStorage.getItem('customApiUrls') || '[]');
+                    if (urls.length > 0 && typeof urls[0] === 'object' && urls[0].url) {
+                        apiUrl = urls[0].url;
+                    }
+                } catch (e) {
+                    console.error('解析自定义API失败', e);
                 }
             }
             
@@ -715,12 +726,14 @@ async function testSiteAvailability(source) {
 function getCustomApiName(apiUrl) {
     if (!apiUrl) return '自定义源';
     
-    // 检查是否包含名称分隔符
-    if (apiUrl.includes(CUSTOM_API_CONFIG.nameSeparator)) {
-        const parts = apiUrl.split(CUSTOM_API_CONFIG.nameSeparator, 2);
-        if (parts.length === 2 && parts[0].trim()) {
-            return parts[0].trim();
+    // 从localStorage获取自定义名称
+    try {
+        const displayNames = JSON.parse(localStorage.getItem('customApiDisplayNames') || '{}');
+        if (displayNames[apiUrl]) {
+            return displayNames[apiUrl];
         }
+    } catch (e) {
+        console.error('解析自定义API名称失败', e);
     }
     
     return '自定义源';

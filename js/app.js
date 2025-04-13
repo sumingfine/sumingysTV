@@ -447,24 +447,30 @@ async function search() {
                 return;
             }
             
-            // 准备API参数 - 需要把对象转回字符串格式
+            // 准备API参数 - 需要把对象转回字符串格式，但只发送URL部分给服务器
+            let displayNames = {}; // 存储显示名称，用于前端显示
             const apiString = customApiUrls.map(item => {
                 if (typeof item === 'object' && item.url) {
-                    // 如果有名称，则以名称|URL的形式传递
+                    // 保存名称映射关系
                     if (item.name) {
-                        return `${item.name}${CUSTOM_API_CONFIG.nameSeparator}${item.url}`;
+                        displayNames[item.url] = item.name;
                     }
+                    // 只发送URL部分给服务器
                     return item.url;
                 }
                 return item;
             }).join(CUSTOM_API_CONFIG.separator);
             
+            // 将显示名称存储到localStorage，用于后续展示
+            localStorage.setItem('customApiDisplayNames', JSON.stringify(displayNames));
+            
             // 检查是否有多个API
             if (customApiUrls.length > 1) {
                 apiParams = '&customApi=' + encodeURIComponent(apiString) + '&source=custom&multipleApis=true';
             } else {
-                // 单个API也保留名称信息
-                apiParams = '&customApi=' + encodeURIComponent(apiString) + '&source=custom';
+                // 单个API只发送URL部分
+                const firstApiUrl = customApiUrls[0].url || customApiUrls[0];
+                apiParams = '&customApi=' + encodeURIComponent(firstApiUrl) + '&source=custom';
             }
         } else {
             apiParams = '&source=' + currentApiSource;
@@ -545,13 +551,8 @@ async function search() {
             // 添加API URL属性，用于详情获取
             let apiUrlAttr = '';
             if (item.api_url) {
-                // 如果是自定义源，确保保存完整的名称|URL格式
-                if (sourceCode === 'custom' && item.source_name && item.source_name !== '自定义源') {
-                    const safeApiUrl = (item.source_name + CUSTOM_API_CONFIG.nameSeparator + item.api_url).replace(/"/g, '&quot;');
-                    apiUrlAttr = `data-api-url="${safeApiUrl}"`;
-                } else {
-                    apiUrlAttr = `data-api-url="${item.api_url.replace(/"/g, '&quot;')}"`;
-                }
+                // 始终只使用URL部分
+                apiUrlAttr = `data-api-url="${item.api_url.replace(/"/g, '&quot;')}"`;
             }
             
             // 重新设计的卡片布局 - 支持更好的封面图显示
@@ -643,27 +644,16 @@ async function showDetails(id, vod_name, sourceCode = currentApiSource) {
             const apiUrl = event.currentTarget?.getAttribute('data-api-url');
             
             if (apiUrl) {
-                // 检查URL是否包含名称分隔符（可能是保存在DOM元素中的完整名称|URL格式）
+                // 直接使用API URL，不包含名称
                 apiParams = '&customApi=' + encodeURIComponent(apiUrl);
             } else {
                 // 回退到使用第一个可用的自定义API
                 const customApis = parseCustomApiUrls();
                 if (customApis.length > 0) {
-                    // 构建完整的名称|URL格式字符串
+                    // 只使用URL部分
                     const firstApi = customApis[0];
-                    let apiString;
-                    
-                    if (typeof firstApi === 'object') {
-                        if (firstApi.name && firstApi.url) {
-                            apiString = `${firstApi.name}${CUSTOM_API_CONFIG.nameSeparator}${firstApi.url}`;
-                        } else {
-                            apiString = firstApi.url || '';
-                        }
-                    } else {
-                        apiString = firstApi;
-                    }
-                    
-                    apiParams = '&customApi=' + encodeURIComponent(apiString);
+                    const url = typeof firstApi === 'object' ? firstApi.url : firstApi;
+                    apiParams = '&customApi=' + encodeURIComponent(url);
                 } else {
                     showToast('无可用的自定义API', 'error');
                     hideLoading();

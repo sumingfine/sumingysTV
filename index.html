@@ -71,15 +71,33 @@
             
             <!-- 添加自定义接口输入框 -->
             <div id="customApiInput" class="hidden">
-                <label class="block text-sm font-medium text-gray-400 mb-2">自定义接口地址(可添加多个，用逗号分隔)</label>
-                <input 
-                    type="text" 
-                    id="customApiUrl" 
-                    class="w-full bg-[#222] border border-[#333] text-white px-3 py-2 rounded-lg focus:outline-none focus:border-white transition-colors"
-                    placeholder="名称1|https://example1.com,名称2|https://example2.com..."
-                >
-                <p class="text-xs text-gray-500 mt-1">格式: 名称|网址 (用逗号分隔多个API)</p>
-                <p class="text-xs text-gray-500">示例: 某某资源|https://example.com,备用源|https://backup.com</p>
+                <!-- 自定义API管理区域 -->
+                <div class="p-3 bg-[#151515] rounded-lg shadow-inner">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-medium text-gray-400 border-b border-[#333] w-full pb-1">自定义API</label>
+                        <button onclick="showAddCustomApiForm()" class="bg-[#333] hover:bg-[#444] text-white w-6 h-6 rounded-full text-center leading-none text-lg ml-1">+</button>
+                    </div>
+                    <div id="customApisList" class="max-h-32 overflow-y-auto mb-2">
+                        <!-- 自定义API将显示在这里 -->
+                    </div>
+                    
+                    <!-- 添加自定义API表单 (默认隐藏) -->
+                    <div id="addCustomApiForm" class="hidden mt-2 p-2 bg-[#191919] rounded-lg">
+                        <input type="text" id="customApiName" placeholder="API名称" class="w-full bg-[#222] border border-[#333] text-white px-2 py-1 rounded mb-2">
+                        <input type="text" id="customApiUrl" placeholder="https://abc.com" class="w-full bg-[#222] border border-[#333] text-white px-2 py-1 rounded mb-2">
+                        <!-- 添加成人内容切换 -->
+                        <div class="flex items-center mb-2">
+                            <input type="checkbox" id="customApiIsAdult" class="form-checkbox h-4 w-4 text-pink-500 bg-[#222] border border-[#333]">
+                            <label for="customApiIsAdult" class="ml-2 text-xs text-pink-400">黄色资源站</label>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="addCustomApi()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs">添加</button>
+                            <button onclick="cancelAddCustomApi()" class="bg-[#444] hover:bg-[#555] text-white px-3 py-1 rounded text-xs">取消</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-xs text-gray-500 mt-1">点击 + 按钮添加自定义API资源</p>
             </div>
             
             <div>

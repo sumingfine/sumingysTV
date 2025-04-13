@@ -21,24 +21,48 @@ function isPasswordVerified() {
 
 // 创建密码验证窗口
 function createPasswordOverlay() {
+    // 防止页面内容加载和显示
+    document.documentElement.style.visibility = 'hidden';
+    
     const overlay = document.createElement('div');
     overlay.id = 'password-overlay';
+    overlay.style.visibility = 'visible';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
+    overlay.style.zIndex = '9999999';
+    overlay.style.display = 'flex';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
     
     const container = document.createElement('div');
     container.className = 'password-container';
+    container.style.backgroundColor = '#111';
+    container.style.border = '1px solid #333';
+    container.style.borderRadius = '8px';
+    container.style.padding = '2rem';
+    container.style.width = '90%';
+    container.style.maxWidth = '400px';
+    container.style.textAlign = 'center';
     
     container.innerHTML = `
-        <h2>宿命影视</h2>
+        <h2 style="margin-bottom: 1.5rem; background: linear-gradient(90deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold;">宿命影视</h2>
         <p style="margin-bottom: 1.5rem; color: #aaa;">请输入访问密码以继续</p>
-        <input type="password" id="password-input" placeholder="请输入密码..." autocomplete="off">
+        <input type="password" id="password-input" style="width: 100%; padding: 0.75rem 1rem; background-color: #222; border: 1px solid #333; color: white; border-radius: 0.5rem; margin-bottom: 1rem; outline: none; transition: border-color 0.3s;" placeholder="请输入密码..." autocomplete="off">
         <div>
-            <button id="password-submit">确认</button>
+            <button id="password-submit" style="background-color: white; color: black; font-weight: 500; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; transition: background-color 0.3s;">确认</button>
         </div>
-        <p id="password-error" class="password-error" style="display: none;">密码错误，请重试</p>
+        <p id="password-error" style="color: #ef4444; margin-top: 0.75rem; font-size: 0.875rem; display: none;">密码错误，请重试</p>
     `;
     
     overlay.appendChild(container);
     document.body.appendChild(overlay);
+    
+    // 防止页面滚动
+    document.body.style.overflow = 'hidden';
     
     // 设置焦点到密码输入框
     setTimeout(() => {
@@ -65,7 +89,13 @@ async function verifyPassword() {
     if (inputHash === PASSWORD_HASH) {
         // 密码正确，记录到本地存储并移除密码窗口
         localStorage.setItem('password_verified', 'true');
+        
+        // 移除密码窗口
         document.getElementById('password-overlay').remove();
+        
+        // 恢复页面正常显示
+        document.documentElement.style.visibility = 'visible';
+        document.body.style.overflow = 'auto';
     } else {
         // 密码错误，显示错误消息
         errorMsg.style.display = 'block';

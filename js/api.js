@@ -59,11 +59,24 @@ async function handleApiRequest(url) {
                 
                 // 添加源信息到每个结果
                 data.list.forEach(item => {
-                    item.source_name = source === 'custom' ? '自定义源' : API_SITES[source].name;
-                    item.source_code = source;
-                    // 对于自定义源，添加API URL信息
                     if (source === 'custom') {
+                        // 检查是否有自定义名称
+                        let apiName = '自定义源';
+                        if (customApi) {
+                            // 检查是否包含名称分隔符
+                            if (customApi.includes(CUSTOM_API_CONFIG.nameSeparator)) {
+                                const parts = customApi.split(CUSTOM_API_CONFIG.nameSeparator, 2);
+                                if (parts.length === 2 && parts[0].trim()) {
+                                    apiName = parts[0].trim();
+                                }
+                            }
+                        }
+                        item.source_name = apiName;
+                        item.source_code = source;
                         item.api_url = customApi;
+                    } else {
+                        item.source_name = API_SITES[source].name;
+                        item.source_code = source;
                     }
                 });
                 
@@ -184,7 +197,8 @@ async function handleApiRequest(url) {
                         actor: videoDetail.vod_actor,
                         remarks: videoDetail.vod_remarks,
                         // 添加源信息
-                        source_name: sourceCode === 'custom' ? '自定义源' : API_SITES[sourceCode].name,
+                        source_name: sourceCode === 'custom' ? 
+                            getCustomApiName(customApi) : API_SITES[sourceCode].name,
                         source_code: sourceCode
                     }
                 });
@@ -637,35 +651,77 @@ async function handleMultipleCustomSearch(searchQuery, customApiUrls) {
 
 async function testSiteAvailability(source) {
     try {
-        // 避免传递空的自定义URL
-        const apiParams = source === 'custom' && customApiUrl
-            ? '&customApi=' + encodeURIComponent(customApiUrl)
-            : source === 'custom'
-                ? '' // 如果是custom但没有URL，返回空字符串
-                : '&source=' + source;
-        
-        // 如果是custom但没有URL，直接返回false
-        if (source === 'custom' && !customApiUrl) {
-            return false;
+        // 对自定义源的处理
+        if (source === 'custom') {
+            if (!customApiUrl) {
+                return false; // 如果没有自定义API URL，直接返回false
+            }
+            
+            // 处理可能包含名称的URL
+            let apiUrl = customApiUrl;
+            if (customApiUrl.includes(CUSTOM_API_CONFIG.nameSeparator)) {
+                const parts = customApiUrl.split(CUSTOM_API_CONFIG.nameSeparator, 2);
+                if (parts.length === 2) {
+                    apiUrl = parts[1].trim();
+                }
+            }
+            
+            if (!apiUrl || !(/^https?:\/\//.test(apiUrl))) {
+                return false;
+            }
+            
+            const apiParams = '&customApi=' + encodeURIComponent(apiUrl) + '&source=custom';
+            
+            // 使用简单测试查询
+            const response = await fetch('/api/search?wd=test' + apiParams, {
+                signal: AbortSignal.timeout(5000)
+            });
+            
+            // 检查响应状态
+            if (!response.ok) {
+                return false;
+            }
+            
+            const data = await response.json();
+            
+            // 检查API响应的有效性
+            return data && data.code !== 400 && Array.isArray(data.list);
+        } else {
+            // 非自定义源的处理
+            const apiParams = '&source=' + source;
+            
+            // 使用简单测试查询
+            const response = await fetch('/api/search?wd=test' + apiParams, {
+                signal: AbortSignal.timeout(5000)
+            });
+            
+            // 检查响应状态
+            if (!response.ok) {
+                return false;
+            }
+            
+            const data = await response.json();
+            
+            // 检查API响应的有效性
+            return data && data.code !== 400 && Array.isArray(data.list);
         }
-        
-        // 使用更简单的测试查询
-        const response = await fetch('/api/search?wd=test' + apiParams, {
-            // 添加超时
-            signal: AbortSignal.timeout(5000)
-        });
-        
-        // 检查响应状态
-        if (!response.ok) {
-            return false;
-        }
-        
-        const data = await response.json();
-        
-        // 检查API响应的有效性
-        return data && data.code !== 400 && Array.isArray(data.list);
     } catch (error) {
         console.error('站点可用性测试失败:', error);
         return false;
     }
+}
+
+// 添加：辅助函数，从API URL中提取自定义名称
+function getCustomApiName(apiUrl) {
+    if (!apiUrl) return '自定义源';
+    
+    // 检查是否包含名称分隔符
+    if (apiUrl.includes(CUSTOM_API_CONFIG.nameSeparator)) {
+        const parts = apiUrl.split(CUSTOM_API_CONFIG.nameSeparator, 2);
+        if (parts.length === 2 && parts[0].trim()) {
+            return parts[0].trim();
+        }
+    }
+    
+    return '自定义源';
 }

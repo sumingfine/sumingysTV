@@ -1,12 +1,12 @@
 :root {
     /* 赛博影视主题配色方案 - 柔和版 */
-    --primary-color: #00ccff;       /* 霓虹蓝主色调 */
+    --primary-color: rgb(0 0 0 / 36%);  
     --primary-light: #33d6ff;       /* 浅霓虹蓝变体 */
     --secondary-color: #0f1622;     /* 深蓝黑背景色 */
     --accent-color: #ff3c78;        /* 霓虹粉强调色 */
     --text-color: #e6f2ff;          /* 柔和的蓝白色文本 */
     --text-muted: #8599b2;          /* 淡蓝灰色次级文本 */
-    --border-color: rgba(0, 204, 255, 0.15);
+    --border-color: rgb(0 0 0 / 36%);
     --page-gradient-start: #0f1622; /* 深蓝黑起始色 */
     --page-gradient-end: #192231;   /* 深靛蓝结束色 */
     --card-gradient-start: #121b29; /* 卡片起始色 */

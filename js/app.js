@@ -10,62 +10,13 @@ let currentVideoTitle = '';
 // 新增全局变量用于倒序状态
 let episodesReversed = false;
 
-// 自定义API管理
-let customApis = [];
-// 尝试从本地存储加载自定义API
-try {
-    const savedApis = localStorage.getItem('customApis');
-    if (savedApis) {
-        customApis = JSON.parse(savedApis);
-    }
-} catch (e) {
-    console.error('加载自定义API失败:', e);
-    customApis = [];
-}
-
 // 新增：解析多个自定义API源
 let customApiUrls = [];
 function parseCustomApiUrls() {
-    // 如果使用新的customApis数组，直接返回其中的内容
-    if (customApis && customApis.length > 0) {
-        return customApis.map(api => ({
-            name: api.name,
-            url: api.url
-        }));
-    }
-    
-    // 兼容旧版本：从customApiUrl字符串解析
     if (!customApiUrl) return [];
-    
-    // 解析带有名称的API格式 "名称|URL"
     return customApiUrl.split(CUSTOM_API_CONFIG.separator)
-        .map(item => {
-            item = item.trim();
-            if (!item) return null;
-            
-            // 检查是否包含名称分隔符
-            if (item.includes(CUSTOM_API_CONFIG.nameSeparator)) {
-                // 分离名称和URL
-                const [name, url] = item.split(CUSTOM_API_CONFIG.nameSeparator, 2);
-                if (name && url && url.trim().length > 0) {
-                    return {
-                        name: name.trim(),
-                        url: url.trim()
-                    };
-                }
-            }
-            
-            // 如果没有名称分隔符，则只有URL
-            if (/^https?:\/\/.+/.test(item)) {
-                return {
-                    name: `${CUSTOM_API_CONFIG.namePrefix}${Math.floor(Math.random() * 1000)}`,
-                    url: item
-                };
-            }
-            
-            return null;
-        })
-        .filter(item => item !== null)
+        .map(url => url.trim())
+        .filter(url => url.length > 0)
         .slice(0, CUSTOM_API_CONFIG.maxSources);
 }
 
@@ -74,24 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化时检查是否使用自定义接口
     if (currentApiSource === 'custom') {
         document.getElementById('customApiInput').classList.remove('hidden');
-        
-        // 兼容之前的格式：如果customApiUrl有值但customApis为空，则进行转换
-        if (customApiUrl && customApis.length === 0) {
-            // 解析旧格式的字符串并转换为新格式
-            const parsedApis = parseCustomApiUrls();
-            if (parsedApis.length > 0) {
-                customApis = parsedApis.map(item => ({
-                    name: item.name,
-                    url: item.url,
-                    isAdult: false, // 默认为非成人内容
-                    addedAt: Date.now()
-                }));
-                saveCustomApis();
-            }
-        }
-        
-        // 渲染自定义API列表
-        renderCustomApis();
+        document.getElementById('customApiUrl').value = customApiUrl;
+        customApiUrls = parseCustomApiUrls();
     }
 
     // 设置 select 的默认选中值
@@ -214,7 +149,8 @@ async function updateSiteStatusWithTest(source) {
     
     // 自定义API源特殊处理 - 测试所有提供的API
     if (source === 'custom') {
-        if (customApis.length === 0) {
+        const urls = parseCustomApiUrls();
+        if (urls.length === 0) {
             updateSiteStatus(false);
             document.getElementById('siteStatus').innerHTML = '<span class="text-gray-500">●</span> 未设置API';
             return;
@@ -222,14 +158,14 @@ async function updateSiteStatusWithTest(source) {
         
         // 测试所有API并返回可用的数量
         const results = await Promise.all(
-            customApis.map(api => testCustomApiUrl(api))
+            urls.map(url => testCustomApiUrl(url))
         );
         
         const availableCount = results.filter(r => r).length;
         if (availableCount > 0) {
             updateSiteStatus(true);
             document.getElementById('siteStatus').innerHTML = 
-                `<span class="text-green-500">●</span> ${availableCount}/${customApis.length} 可用`;
+                `<span class="text-green-500">●</span> ${availableCount}/${urls.length} 可用`;
         } else {
             updateSiteStatus(false);
             document.getElementById('siteStatus').innerHTML = 
@@ -280,12 +216,7 @@ async function updateSiteStatusWithTest(source) {
 }
 
 // 新增：测试单个自定义API URL
-async function testCustomApiUrl(apiItem) {
-    if (!apiItem) return false;
-    
-    // 如果是对象，提取URL，否则直接使用
-    const url = typeof apiItem === 'object' ? apiItem.url : apiItem;
-    
+async function testCustomApiUrl(url) {
     if (!url) return false;
     
     // 验证URL格式
@@ -349,8 +280,9 @@ function setupEventListeners() {
         
         if (currentApiSource === 'custom') {
             customApiInput.classList.remove('hidden');
-            // 渲染自定义API列表
-            renderCustomApis();
+            customApiUrl = document.getElementById('customApiUrl').value;
+            localStorage.setItem('customApiUrl', customApiUrl);
+            customApiUrls = parseCustomApiUrls();
             // 自定义接口不立即测试可用性
             document.getElementById('siteStatus').innerHTML = '<span class="text-gray-500">●</span> 待测试';
         } else {
@@ -464,55 +396,21 @@ async function search() {
         
         // 处理自定义API源
         if (currentApiSource === 'custom') {
-            // 检查是否有自定义API
-            if (customApis.length === 0) {
-                showToast('请先添加自定义API', 'warning');
+            // 获取可能包含多个API的字符串
+            customApiUrl = document.getElementById('customApiUrl').value.trim();
+            localStorage.setItem('customApiUrl', customApiUrl);
+            
+            if (!customApiUrl) {
+                showToast('请先设置自定义API地址', 'warning');
                 hideLoading();
                 return;
             }
             
-            // 筛选出非成人内容的API（如果开启了过滤）
-            let apisToUse = customApis;
-            const yellowFilterEnabled = localStorage.getItem('yellowFilterEnabled') === 'true';
-            if (yellowFilterEnabled) {
-                apisToUse = customApis.filter(api => !api.isAdult);
-                if (apisToUse.length === 0) {
-                    showToast('已过滤所有成人内容API，请添加非成人内容API或关闭过滤', 'warning');
-                    hideLoading();
-                    return;
-                }
-            }
-            
-            // 解析自定义API
-            customApiUrls = apisToUse.map(api => ({
-                name: api.name,
-                url: api.url
-            }));
-            
-            // 准备API参数 - 只发送URL部分给服务器
-            let displayNames = {}; // 存储显示名称，用于前端显示
-            const apiString = customApiUrls.map(item => {
-                if (typeof item === 'object' && item.url) {
-                    // 保存名称映射关系
-                    if (item.name) {
-                        displayNames[item.url] = item.name;
-                    }
-                    // 只发送URL部分给服务器
-                    return item.url;
-                }
-                return item;
-            }).join(CUSTOM_API_CONFIG.separator);
-            
-            // 将显示名称存储到localStorage，用于后续展示
-            localStorage.setItem('customApiDisplayNames', JSON.stringify(displayNames));
-            
-            // 检查是否有多个API
-            if (customApiUrls.length > 1) {
-                apiParams = '&customApi=' + encodeURIComponent(apiString) + '&source=custom&multipleApis=true';
+            // 检查是否有多个API (存在逗号)
+            if (customApiUrl.includes(CUSTOM_API_CONFIG.separator)) {
+                apiParams = '&customApi=' + encodeURIComponent(customApiUrl) + '&source=custom&multipleApis=true';
             } else {
-                // 单个API只发送URL部分
-                const firstApiUrl = customApiUrls[0].url || customApiUrls[0];
-                apiParams = '&customApi=' + encodeURIComponent(firstApiUrl) + '&source=custom';
+                apiParams = '&customApi=' + encodeURIComponent(customApiUrl) + '&source=custom';
             }
         } else {
             apiParams = '&source=' + currentApiSource;
@@ -591,11 +489,8 @@ async function search() {
             const sourceCode = item.source_code || currentApiSource;
             
             // 添加API URL属性，用于详情获取
-            let apiUrlAttr = '';
-            if (item.api_url) {
-                // 始终只使用URL部分
-                apiUrlAttr = `data-api-url="${item.api_url.replace(/"/g, '&quot;')}"`;
-            }
+            const apiUrlAttr = item.api_url ? 
+                `data-api-url="${item.api_url.replace(/"/g, '&quot;')}"` : '';
             
             // 重新设计的卡片布局 - 支持更好的封面图显示
             const hasCover = item.vod_pic && item.vod_pic.startsWith('http');
@@ -686,13 +581,12 @@ async function showDetails(id, vod_name, sourceCode = currentApiSource) {
             const apiUrl = event.currentTarget?.getAttribute('data-api-url');
             
             if (apiUrl) {
-                // 直接使用API URL，不包含名称
                 apiParams = '&customApi=' + encodeURIComponent(apiUrl);
             } else {
-                // 回退到使用自定义API列表中的第一个可用API
-                if (customApis.length > 0) {
-                    // 只使用URL部分
-                    apiParams = '&customApi=' + encodeURIComponent(customApis[0].url);
+                // 回退到使用第一个可用的自定义API
+                const urls = parseCustomApiUrls();
+                if (urls.length > 0) {
+                    apiParams = '&customApi=' + encodeURIComponent(urls[0]);
                 } else {
                     showToast('无可用的自定义API', 'error');
                     hideLoading();
@@ -846,166 +740,4 @@ function toggleEpisodeOrder() {
             arrowIcon.style.transform = episodesReversed ? 'rotate(180deg)' : 'rotate(0deg)';
         }
     }
-}
-
-// 显示添加自定义API表单
-function showAddCustomApiForm() {
-    document.getElementById('addCustomApiForm').classList.remove('hidden');
-    // 清空输入框
-    document.getElementById('customApiName').value = '';
-    document.getElementById('customApiUrl').value = '';
-    document.getElementById('customApiIsAdult').checked = false;
-}
-
-// 取消添加自定义API
-function cancelAddCustomApi() {
-    document.getElementById('addCustomApiForm').classList.add('hidden');
-}
-
-// 添加自定义API
-function addCustomApi() {
-    const name = document.getElementById('customApiName').value.trim();
-    const url = document.getElementById('customApiUrl').value.trim();
-    const isAdult = document.getElementById('customApiIsAdult').checked;
-    
-    // 验证输入
-    if (!name) {
-        showToast('请输入API名称', 'warning');
-        return;
-    }
-    
-    if (!url || !url.match(/^https?:\/\/.+/)) {
-        showToast('请输入有效的API地址', 'warning');
-        return;
-    }
-    
-    // 验证URL是否已存在
-    const exists = customApis.some(api => api.url === url);
-    if (exists) {
-        showToast('该API地址已存在', 'warning');
-        return;
-    }
-    
-    // 添加到自定义API列表
-    const newApi = {
-        name,
-        url,
-        isAdult,
-        addedAt: Date.now()
-    };
-    
-    customApis.push(newApi);
-    
-    // 保存到本地存储
-    saveCustomApis();
-    
-    // 刷新显示
-    renderCustomApis();
-    
-    // 隐藏表单
-    cancelAddCustomApi();
-    
-    // 提示成功
-    showToast(`成功添加API: ${name}`, 'success');
-    
-    // 更新customApiUrl以兼容旧代码
-    updateCustomApiString();
-}
-
-// 删除自定义API
-function deleteCustomApi(index) {
-    const api = customApis[index];
-    if (!api) return;
-    
-    if (confirm(`确定要删除"${api.name}"吗？`)) {
-        customApis.splice(index, 1);
-        saveCustomApis();
-        renderCustomApis();
-        updateCustomApiString();
-        showToast(`已删除API: ${api.name}`, 'info');
-    }
-}
-
-// 保存自定义API到localStorage
-function saveCustomApis() {
-    try {
-        localStorage.setItem('customApis', JSON.stringify(customApis));
-    } catch (e) {
-        console.error('保存自定义API失败:', e);
-    }
-}
-
-// 渲染自定义API列表
-function renderCustomApis() {
-    const container = document.getElementById('customApisList');
-    if (!container) return;
-    
-    if (customApis.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-xs text-center py-2">暂无自定义API</p>';
-        return;
-    }
-    
-    container.innerHTML = customApis.map((api, index) => `
-        <div class="flex justify-between items-center p-2 bg-[#191919] rounded mb-1 group">
-            <div class="flex items-center">
-                <span class="text-sm mr-2 ${api.isAdult ? 'text-pink-400' : 'text-white'}">${api.name}</span>
-                <span class="text-xs text-gray-500 truncate max-w-[120px]">${api.url}</span>
-            </div>
-            <button onclick="deleteCustomApi(${index})" class="text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-            </button>
-        </div>
-    `).join('');
-}
-
-// 更新customApiUrl字符串以兼容旧代码
-function updateCustomApiString() {
-    // 将customApis数组转换为旧格式的字符串: "name1|url1,name2|url2"
-    customApiUrl = customApis.map(api => 
-        `${api.name}${CUSTOM_API_CONFIG.nameSeparator}${api.url}`
-    ).join(CUSTOM_API_CONFIG.separator);
-    
-    localStorage.setItem('customApiUrl', customApiUrl);
-}
-
-// 显示toast消息
-function showToast(message, type = 'info') {
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toastMessage');
-    
-    if (!toast || !toastMessage) return;
-    
-    // 设置消息类型颜色
-    switch (type) {
-        case 'error':
-            toast.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-green-500');
-            toast.classList.add('bg-red-500');
-            break;
-        case 'warning':
-            toast.classList.remove('bg-blue-500', 'bg-red-500', 'bg-green-500');
-            toast.classList.add('bg-yellow-500');
-            break;
-        case 'success':
-            toast.classList.remove('bg-blue-500', 'bg-red-500', 'bg-yellow-500');
-            toast.classList.add('bg-green-500');
-            break;
-        default: // info
-            toast.classList.remove('bg-red-500', 'bg-yellow-500', 'bg-green-500');
-            toast.classList.add('bg-blue-500');
-    }
-    
-    // 设置消息内容
-    toastMessage.textContent = message;
-    
-    // 显示toast
-    toast.classList.remove('opacity-0', '-translate-y-full');
-    toast.classList.add('opacity-100', 'translate-y-0');
-    
-    // 3秒后自动隐藏
-    setTimeout(() => {
-        toast.classList.remove('opacity-100', 'translate-y-0');
-        toast.classList.add('opacity-0', '-translate-y-full');
-    }, 3000);
 }

@@ -4,15 +4,6 @@ function toggleSettings(e) {
     e && e.stopPropagation();
     const panel = document.getElementById('settingsPanel');
     panel.classList.toggle('show');
-    
-    // 当面板显示时，测试当前选择的API源可用性
-    if (panel.classList.contains('show') && typeof currentApiSource !== 'undefined') {
-        document.getElementById('currentCode').textContent = currentApiSource;
-        // 如果updateSiteStatusWithTest函数存在，则调用它
-        if (typeof updateSiteStatusWithTest === 'function') {
-            updateSiteStatusWithTest(currentApiSource);
-        }
-    }
 }
 
 // 改进的Toast显示函数 - 支持队列显示多个Toast

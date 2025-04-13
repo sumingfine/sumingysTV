@@ -93,7 +93,7 @@ button, .card-hover {
 }
 
 ::-webkit-scrollbar-track {
-    background: #111;
+    background: rgba(0, 0, 0, 0.65);;
     border-radius: 4px;
 }
 
@@ -109,7 +109,7 @@ button, .card-hover {
 
 * {
     scrollbar-width: thin;
-    scrollbar-color: #333 #111;
+    scrollbar-color: #333 rgba(0, 0, 0, 0.65);;
 }
 
 .search-tag {
@@ -267,7 +267,7 @@ body {
 }
 
 .password-container {
-    background-color: #111;
+    background-color: rgba(0, 0, 0, 0.65);;
     border: 1px solid #333;
     border-radius: 8px;
     padding: 2rem;

@@ -1,14 +1,14 @@
 :root {
     /* 赛博影视主题配色方案 - 柔和版 */
     --primary-color: rgba(0, 0, 0, 0.36); 
-    --primary-light: #33d6ff;       /* 浅霓虹蓝变体 */
+    --primary-light: #fff;       /* 浅霓虹蓝变体 */
     --secondary-color: rgba(0, 0, 0, 0.36);     /* 深蓝黑背景色 */
-    --accent-color: #ff3c78;        /* 霓虹粉强调色 */
-    --text-color: #e6f2ff;          /* 柔和的蓝白色文本 */
-    --text-muted: #8599b2;          /* 淡蓝灰色次级文本 */
+    --accent-color: #fff;        /* 霓虹粉强调色 */
+    --text-color: #fff;          /* 柔和的蓝白色文本 */
+    --text-muted: #fff;          /* 淡蓝灰色次级文本 */
     --border-color: rgba(0, 0, 0, 0.36);
     --page-gradient-start: rgba(0, 0, 0, 0.36);  /* 深蓝黑起始色 */
-    --page-gradient-end: #192231;   /* 深靛蓝结束色 */
+    --page-gradient-end: #fff;   /* 深靛蓝结束色 */
     --card-gradient-start: #121b29; /* 卡片起始色 */
     --card-gradient-end: #1c2939;   /* 卡片结束色 */
     --card-accent: rgba(0, 204, 255, 0.12); /* 霓虹蓝卡片强调色 */

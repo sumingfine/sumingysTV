@@ -450,6 +450,10 @@ async function search() {
             // 准备API参数 - 需要把对象转回字符串格式
             const apiString = customApiUrls.map(item => {
                 if (typeof item === 'object' && item.url) {
+                    // 如果有名称，则以名称|URL的形式传递
+                    if (item.name) {
+                        return `${item.name}${CUSTOM_API_CONFIG.nameSeparator}${item.url}`;
+                    }
                     return item.url;
                 }
                 return item;
@@ -459,7 +463,8 @@ async function search() {
             if (customApiUrls.length > 1) {
                 apiParams = '&customApi=' + encodeURIComponent(apiString) + '&source=custom&multipleApis=true';
             } else {
-                apiParams = '&customApi=' + encodeURIComponent(customApiUrls[0].url) + '&source=custom';
+                // 单个API也保留名称信息
+                apiParams = '&customApi=' + encodeURIComponent(apiString) + '&source=custom';
             }
         } else {
             apiParams = '&source=' + currentApiSource;
@@ -538,8 +543,16 @@ async function search() {
             const sourceCode = item.source_code || currentApiSource;
             
             // 添加API URL属性，用于详情获取
-            const apiUrlAttr = item.api_url ? 
-                `data-api-url="${item.api_url.replace(/"/g, '&quot;')}"` : '';
+            let apiUrlAttr = '';
+            if (item.api_url) {
+                // 如果是自定义源，确保保存完整的名称|URL格式
+                if (sourceCode === 'custom' && item.source_name && item.source_name !== '自定义源') {
+                    const safeApiUrl = (item.source_name + CUSTOM_API_CONFIG.nameSeparator + item.api_url).replace(/"/g, '&quot;');
+                    apiUrlAttr = `data-api-url="${safeApiUrl}"`;
+                } else {
+                    apiUrlAttr = `data-api-url="${item.api_url.replace(/"/g, '&quot;')}"`;
+                }
+            }
             
             // 重新设计的卡片布局 - 支持更好的封面图显示
             const hasCover = item.vod_pic && item.vod_pic.startsWith('http');
@@ -630,15 +643,27 @@ async function showDetails(id, vod_name, sourceCode = currentApiSource) {
             const apiUrl = event.currentTarget?.getAttribute('data-api-url');
             
             if (apiUrl) {
+                // 检查URL是否包含名称分隔符（可能是保存在DOM元素中的完整名称|URL格式）
                 apiParams = '&customApi=' + encodeURIComponent(apiUrl);
             } else {
                 // 回退到使用第一个可用的自定义API
                 const customApis = parseCustomApiUrls();
                 if (customApis.length > 0) {
-                    // 获取URL (可能是对象或字符串)
+                    // 构建完整的名称|URL格式字符串
                     const firstApi = customApis[0];
-                    const url = typeof firstApi === 'object' ? firstApi.url : firstApi;
-                    apiParams = '&customApi=' + encodeURIComponent(url);
+                    let apiString;
+                    
+                    if (typeof firstApi === 'object') {
+                        if (firstApi.name && firstApi.url) {
+                            apiString = `${firstApi.name}${CUSTOM_API_CONFIG.nameSeparator}${firstApi.url}`;
+                        } else {
+                            apiString = firstApi.url || '';
+                        }
+                    } else {
+                        apiString = firstApi;
+                    }
+                    
+                    apiParams = '&customApi=' + encodeURIComponent(apiString);
                 } else {
                     showToast('无可用的自定义API', 'error');
                     hideLoading();

@@ -1,15 +1,16 @@
-# 宿命影视 - 免费在线视频搜索与观看平台
+# LibreTV - 免费在线视频搜索与观看平台
 
 ## 📺 项目简介
 
-宿命影视 是一个轻量级、免费的在线视频搜索与观看平台，提供来自多个视频源的内容搜索与播放服务。无需注册，即开即用，支持多种设备访问。项目采用前端技术构建，并**利用 Serverless Functions 实现内部代理**，以解决跨域请求问题并处理 M3U8 播放列表，可轻松部署在 Cloudflare Pages、Vercel、Netlify 等现代托管服务上。
+LibreTV 是一个轻量级、免费的在线视频搜索与观看平台，提供来自多个视频源的内容搜索与播放服务。无需注册，即开即用，支持多种设备访问。项目采用前端技术构建，并**利用 Serverless Functions 实现内部代理**，以解决跨域请求问题并处理 M3U8 播放列表，可轻松部署在 Cloudflare Pages、Vercel、Netlify 等现代托管服务上。
 
-本项目基于 [bestK/tv](https://github.com/bestK/tv) 二开的一款轻量型视频搜索播放项目，在此鸣谢原作者！
+本项目基于 [bestK/tv](https://github.com/bestK/tv)
 
-演示站：[https://sumingys.top/](https://sumingys.top/)
+演示站：[https://libretv.is-an.org/](https://libretv.is-an.org/)
 
-<img src="https://testingcf.jsdelivr.net/gh/bestZwei/imgs@master/picgo/image-20250406231222216.png" alt="宿命影视 界面截图" style="zoom:67%;" />
+<img src="https://testingcf.jsdelivr.net/gh/bestZwei/imgs@master/picgo/image-20250406231222216.png" alt="LibreTV 界面截图" style="zoom:67%;" />
 
+**感谢 [NodeSupport](https://www.nodeseek.com/post-305185-1) 友情赞助**
 
 ## ✨ 主要特性
 
@@ -25,7 +26,7 @@
 
 ## ⌨️ 键盘快捷键
 
-宿命影视 播放器支持以下键盘快捷键：
+LibreTV 播放器支持以下键盘快捷键：
 
 -   **Alt + 左箭头**: 播放上一集
 -   **Alt + 右箭头**: 播放下一集
@@ -58,8 +59,8 @@
 
 ## 🚀 一键部署
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FbestZwei%2F宿命影视)
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/bestZwei/宿命影视)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FbestZwei%2FLibreTV)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/bestZwei/LibreTV)
 [![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy%20to-Cloudflare%20Pages-F38020?logo=cloudflare&logoColor=F38020)](https://dash.cloudflare.com/?to=/:account/pages/new/deploy-with-git)
 
 **重要**: 使用上方按钮部署后，仍需根据下文**手动配置环境变量**才能使代理功能正常工作！
@@ -128,6 +129,24 @@
 如果你只想预览静态界面，可以使用任何 HTTP 服务器：
 
 ```bash
+# 使用 Node.js 的 http-server
+npx http-server -p 8080
+```
+
+注意: 这种方式无法运行 Serverless Function 代理，因此 API 请求会因跨域失败。要完整测试（包括代理功能），你需要使用对应平台的 CLI 工具进行本地开发：
+Cloudflare Pages: npm install -g wrangler 然后 wrangler pages dev .
+Vercel: npm install -g vercel 然后 vercel dev
+Netlify: npm install -g netlify-cli 然后 netlify dev
+
+### Docker 部署 (仅限静态部分)
+提供的 Docker 镜像仅包含 Nginx 和静态文件，同样无法运行 Serverless Function 代理。
+
+```bash
+docker pull bestzwei/libretv:latest
+docker run -d --name libretv -p 8899:80 bestzwei/libretv:latest
+```
+
+访问 http://localhost:8899 只能查看静态界面，API 功能无法使用。不推荐使用 Docker 部署此项目，除非你自行在 Docker 环境中配置反向代理来模拟 Serverless Function 的行为（这比较复杂）。
 
 ## 🔧 自定义配置
 前端配置 (js/config.js):
@@ -142,7 +161,7 @@
 Cloudflare Pages 结构:
 
 ```
-sumingysTV/
+LibreTV/
 ├── functions/
 │   └── proxy/
 │       └── [[path]].js  # CF Pages Function
@@ -156,7 +175,7 @@ sumingysTV/
 Vercel 结构:
 
 ```
-sumingysTV/
+LibreTV/
 ├── api/
 │   └── proxy/
 │       └── [...path].js # Vercel Serverless Function
@@ -170,7 +189,7 @@ sumingysTV/
 Netlify 结构:
 
 ```
-sumingysTV/
+LibreTV/
 ├── netlify/
 │   └── functions/
 │       └── proxy.js     # Netlify Function
@@ -184,6 +203,15 @@ sumingysTV/
 
 (注意：实际项目中你只需保留与你目标平台对应的函数文件和配置)
 
+## Star History
+![alt text](https://api.star-history.com/svg?repos=bestZwei/LibreTV&type=Date)
+
 ## ⚠️ 免责声明
 
-宿命影视 仅作为视频搜索工具，不存储、上传或分发任何视频内容。所有视频均来自第三方 API 接口提供的公开搜索结果。内部代理仅用于解决浏览器跨域限制和处理 M3U8 格式，不修改视频内容本身。如有侵权内容，请联系相应的内容提供方处理。使用本工具产生的任何法律后果由使用者自行承担。
+LibreTV 仅作为视频搜索工具，不存储、上传或分发任何视频内容。所有视频均来自第三方 API 接口提供的公开搜索结果。内部代理仅用于解决浏览器跨域限制和处理 M3U8 格式，不修改视频内容本身。如有侵权内容，请联系相应的内容提供方处理。使用本工具产生的任何法律后果由使用者自行承担。
+
+## 🔄 更新日志
+- 1.0.0 (2025-04-06): 初始版本发布。
+- 1.0.1 (2025-04-07): 添加客户端广告过滤，优化播放器。
+- 1.0.2 (2025-04-08): 分离播放页面，优化 API 兼容性。
+- 1.1.0 (2025-04-12): 集成 Serverless Function 内部代理，解决 CORS 问题，重构 M3U8 处理逻辑，移除 KV 依赖，增加多平台 (CF Pages, Vercel, Netlify) 部署支持和指南。

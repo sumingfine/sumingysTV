@@ -1,20 +1,18 @@
-// 密码保护功能
-// 使用哈希值存储密码 - 这是"123456"的SHA-256哈希值
 const PASSWORD_HASH = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
 
-// 计算字符串的SHA-256哈希值
+
 async function sha256(message) {
-    // 将字符串编码为UTF-8字节数组
+
     const msgBuffer = new TextEncoder().encode(message);
-    // 使用SubtleCrypto API计算哈希值
+
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    // 将哈希值转换为十六进制字符串
+
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     return hashHex;
 }
 
-// 检查是否已经验证过密码
+
 function isPasswordVerified() {
     return localStorage.getItem('password_verified') === 'true';
 }

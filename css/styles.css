@@ -1,44 +1,57 @@
 :root {
-    /* 简约主题配色方案 */
-    --primary-color: #fff;       /* 简约白色主色调 */
-    --primary-light: #6ba5e9;       /* 浅蓝色变体 */
-    --secondary-color: #fff;     /* 浅灰白色 */
-    --accent-color: #e74c3c;        /* 简约红色强调色 */
-    --text-color: #333333;          /* 深灰色文本 */
-    --text-muted: #777777;          /* 中灰色次级文本 */
-    --border-color: #dddddd;        /* 简单边框色 */
-    --page-bg: #ffffff;             /* 纯白页面背景 */
-    --card-bg: #ffffff;             /* 卡片背景色 */
-    --card-accent: rgba(74, 144, 226, 0.08); /* 淡蓝卡片强调色 */
-    --card-hover-border: #4a90e2;   /* 悬停边框颜色 */
+  --primary-color: #5391f0;
+  --primary-light: #33d6ff;
+  --secondary-color: #0f1622;
+  --accent-color: #ff3c78;
+  --text-color: #f6f6f6;
+  --text-muted: #8599b2;
+  --border-color: rgba(246, 246, 246, 0.15);
+  --page-gradient-start: #bad7df;
+  --page-gradient-end: #bad7df;
+  --card-gradient-start: #8785a2;
+  --card-gradient-end: #8785a2;
+  --card-accent: rgba(0, 204, 255, 0.12);
+  --card-hover-border: rgba(0, 204, 255, 0.5);
 }
 
 .page-bg {
-    background: var(--page-bg);
-    min-height: 100vh;
-    /* 简约背景，移除了点状背景和渐变 */
-}
-
-.page-bg {
-    background: linear-gradient(180deg, var(--page-gradient-start), var(--page-gradient-end));
-    min-height: 100vh;
-    /* 柔和赛博点状背景 */
-    background-image: url(https://tc.alcy.cc/i/2024/04/21/6624164e0ee6c.webp);
-    background-blend-mode: normal;
-    background-size: cover, 100px 100px, 50px 50px, 75px 75px;
+  background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
+  min-height: 100vh;
+  background-blend-mode: normal;
+  background-size: cover, 100px 100px, 50px 50px, 75px 75px;
 }
 
 button, .card-hover {
     transition: all 0.3s ease;
 }
 
+/* 改进卡片适应不同内容长度 */
 .card-hover {
     border: 1px solid var(--border-color);
-    background: linear-gradient(135deg, var(--card-gradient-start), var(--card-gradient-end));
+    background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     position: relative;
     overflow: hidden;
     border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* 确保卡片内容区域高度一致性 */
+.card-hover .flex-grow {
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 针对不同长度的标题优化显示 */
+.card-hover h3 {
+    min-height: 3rem;  /* 至少能显示2行标题 */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    -webkit-line-clamp: 2; /* 最多显示2行 */
 }
 
 .card-hover::before {
@@ -65,9 +78,13 @@ button, .card-hover {
 .gradient-text {
     background: linear-gradient(to right, var(--primary-color), var(--accent-color));
     -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
+/* 改进设置面板样式 */
 .settings-panel {
+    scrollbar-width: thin;
+    scrollbar-color: #444 #222;
     transform: translateX(100%);
     transition: transform 0.3s ease;
     background: linear-gradient(135deg, var(--page-gradient-end), var(--page-gradient-start));
@@ -76,6 +93,29 @@ button, .card-hover {
 
 .settings-panel.show {
     transform: translateX(0);
+}
+
+.settings-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.settings-panel::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 4px;
+}
+
+/* 设置面板区块样式 */
+.settings-panel .shadow-inner {
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    transition: all 0.2s ease-in-out;
+}
+
+.settings-panel .shadow-inner:hover {
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .search-button {
@@ -93,7 +133,7 @@ button, .card-hover {
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.65);;
+    background: #111;
     border-radius: 4px;
 }
 
@@ -109,7 +149,7 @@ button, .card-hover {
 
 * {
     scrollbar-width: thin;
-    scrollbar-color: #333 rgba(0, 0, 0, 0.65);;
+    scrollbar-color: #f6f6f6 #5391f0;;
 }
 
 .search-tag {
@@ -132,7 +172,6 @@ button, .card-hover {
     transition: all 0.3s ease;
     margin-top: auto;
     background: linear-gradient(to bottom, transparent, var(--page-gradient-start));
-    border-top: 1px solid var(--border-color);
 }
 
 .footer a:hover {
@@ -171,6 +210,17 @@ body {
     }
 }
 
+/* 移动端布局优化 */
+@media screen and (max-width: 768px) {
+    .card-hover h3 {
+        min-height: 2.5rem;
+    }
+    
+    .card-hover .flex-grow {
+        min-height: 80px;
+    }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -190,20 +240,19 @@ body {
 }
 
 #modal > div {
-    background: linear-gradient(135deg, var(--card-gradient-start), var(--card-gradient-end));
+    background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
     border: 1px solid var(--primary-color);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(0, 204, 255, 0.1);
     border-radius: 8px;
 }
 
 #modalContent button {
-    background: rgba(0, 204, 255, 0.08);
     border: 1px solid rgba(0, 204, 255, 0.2);
     transition: all 0.2s ease;
 }
 
 #modalContent button:hover {
-    background: rgba(0, 204, 255, 0.15);
+    background-color: #5391f0;;
     border-color: var(--primary-color);
     box-shadow: 0 0 8px rgba(0, 204, 255, 0.3);
 }
@@ -252,71 +301,454 @@ body {
     box-shadow: 0 2px 4px rgba(0, 204, 255, 0.3);
 }
 
-/* 密码保护窗口样式 */
-#password-overlay {
-    position: fixed;
+/* 添加API复选框样式 */
+.form-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    height: 14px;
+    width: 14px;
+    background-color: #222;
+    border: 1px solid #333;
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    outline: none;
+}
+
+.form-checkbox:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.form-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* API滚动区域美化 */
+#apiCheckboxes {
+    scrollbar-width: thin;
+    scrollbar-color: #444 #222;
+}
+
+#apiCheckboxes::-webkit-scrollbar {
+    width: 6px;
+}
+
+#apiCheckboxes::-webkit-scrollbar-track {
+    background: #222;
+    border-radius: 4px;
+}
+
+#apiCheckboxes::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 4px;
+}
+
+/* 自定义API列表样式 */
+#customApisList {
+    scrollbar-width: thin;
+    scrollbar-color: #444 #222;
+}
+
+#customApisList::-webkit-scrollbar {
+    width: 6px;
+}
+
+#customApisList::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#customApisList::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 4px;
+}
+
+/* 设置面板滚动样式 */
+.settings-panel {
+    scrollbar-width: thin;
+    scrollbar-color: #444 #222;
+}
+
+.settings-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.settings-panel::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 4px;
+}
+
+/* 添加自定义API表单动画 */
+#addCustomApiForm {
+    transition: all 0.3s ease;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+#addCustomApiForm.hidden {
+    max-height: 0;
+    padding: 0;
+    opacity: 0;
+}
+
+#addCustomApiForm:not(.hidden) {
+    max-height: 230px;
+    opacity: 1;
+}
+
+/* 成人内容API标记样式 */
+.api-adult + label {
+    color: #ff6b8b !important;
+}
+
+/* 添加警告图标和标签样式 */
+.adult-warning {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.25rem;
+    color: #ff6b8b;
+}
+
+.adult-warning svg {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+}
+
+/* 过滤器禁用样式 */
+.filter-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+/* API组标题样式 */
+.api-group-title {
+    grid-column: span 2;
+    padding: 0.25rem 0;
+    margin-top: 0.5rem;
+    border-top: 1px solid #333;
+    color: #8599b2;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.api-group-title.adult {
+    color: #ff6b8b;
+}
+
+/* 过滤器禁用样式 - 改进版本 */
+.filter-disabled {
+    position: relative;
+}
+
+.filter-disabled::after {
+    content: '';
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.95);
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.password-container {
-    background-color: rgba(0, 0, 0, 0.65);;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 2rem;
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-}
-
-.password-container h2 {
-    margin-bottom: 1.5rem;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: bold;
-}
-
-.password-container input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background-color: #222;
-    border: 1px solid #333;
-    color: white;
+    background-color: rgba(0,0,0,0.4);
     border-radius: 0.5rem;
-    margin-bottom: 1rem;
-    outline: none;
-    transition: border-color 0.3s;
+    z-index: 5;
 }
 
-.password-container input:focus {
-    border-color: white;
+.filter-disabled > * {
+    opacity: 0.7;
 }
 
-.password-container button {
-    background-color: white;
-    color: black;
+.filter-disabled .toggle-bg {
+    background-color: #333 !important;
+}
+
+.filter-disabled .toggle-dot {
+    transform: translateX(0) !important;
+    background-color: #666 !important;
+}
+
+/* 改进过滤器禁用样式 */
+.filter-disabled .filter-description {
+    color: #ff6b8b !important;
+    font-style: italic;
     font-weight: 500;
-    padding: 0.75rem 1.5rem;
+}
+
+/* 修改过滤器禁用样式，确保文字清晰可见 */
+.filter-disabled {
+    position: relative;
+}
+
+.filter-disabled::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.3);
     border-radius: 0.5rem;
-    cursor: pointer;
-    transition: background-color 0.3s;
+    z-index: 5;
 }
 
-.password-container button:hover {
-    background-color: #e5e5e5;
+.filter-disabled > * {
+    opacity: 1; /* 提高子元素不透明度，保证可见性 */
+    z-index: 6; /* 确保内容在遮罩上方 */
+    position: relative;
 }
 
-.password-error {
-    color: #ef4444;
-    margin-top: 0.75rem;
-    font-size: 0.875rem;
+/* 改进过滤器禁用状态下的描述样式 */
+.filter-disabled .filter-description {
+    color: #ff7b9d !important; /* 更亮的粉色 */
+    font-style: italic;
+    font-weight: 500;
+    text-shadow: 0 0 2px rgba(0,0,0,0.8); /* 添加文字阴影提高对比度 */
+}
+
+/* 开关的禁用样式 */
+.filter-disabled .toggle-bg {
+    background-color: #444 !important;
+    opacity: 0.8;
+}
+
+.filter-disabled .toggle-dot {
+    transform: translateX(0) ;
+    background-color: #777 ;
+    opacity: 0.9;
+}
+
+/* 警告提示样式改进 */
+.filter-tooltip {
+    background-color: rgba(255, 61, 87, 0.1);
+    border: 1px solid rgba(255, 61, 87, 0.2);
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+    line-height: 1.25;
+    position: relative;
+    z-index: 10;
+}
+
+.filter-tooltip svg {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin-right: 0.35rem;
+}
+
+/* 编辑按钮样式 */
+.custom-api-edit {
+    color: #3b82f6;
+    transition: color 0.2s ease;
+}
+
+.custom-api-edit:hover {
+    color: #2563eb;
+}
+
+/* 自定义API条目样式改进 */
+#customApisList .api-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem 0.5rem;
+    margin-bottom: 0.25rem;
+    background-color: #222;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+}
+
+#customApisList .api-item:hover {
+    background-color: #2a2a2a;
+}
+
+/* 成人内容标签样式 */
+.adult-tag {
+    display: inline-flex;
+    align-items: center;
+    color: #ff6b8b;
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-right: 0.35rem;
+}
+
+/* 历史记录面板样式 */
+.history-panel {
+    transition: transform 0.3s ease-in-out;
+    overflow-y: scroll; /* 始终显示滚动条，防止宽度变化 */
+    overflow-x: hidden; /* 防止水平滚动 */
+    width: 320px; /* 固定宽度 */
+    box-sizing: border-box; /* 确保padding不影响总宽度 */
+    scrollbar-gutter: stable; /* 现代浏览器：为滚动条预留空间 */
+}
+
+.history-panel.show {
+    transform: translateX(0);
+}
+
+#historyList {
+    padding-right: 6px; /* 为滚动条预留空间，确保内容不被挤压 */
+}
+
+/* 历史记录项样式优化 */
+.history-item {
+    background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
+    border-radius: 6px; /* 减小圆角 */
+    border: 1px solid #333;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    padding: 10px 14px;
+    position: relative;
+    margin-bottom: 8px; /* 减小底部间距 */
+    width: 100%; /* 确保宽度一致 */
+}
+
+.history-item:hover {
+    transform: translateY(-2px);
+    border-color: #444;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* 添加组悬停效果，使删除按钮在悬停时显示 */
+.history-item .delete-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.history-item:hover .delete-btn {
+    opacity: 1;
+}
+
+.history-info {
+    padding: 0; /* 移除额外的内边距 */
+    min-height: 70px;
+}
+
+.history-title {
+    font-weight: 500;
+    font-size: 0.95rem; /* 减小字体大小 */
+    margin-bottom: 2px; /* 减小底部边距 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.history-meta {
+    color: #bbb;
+    font-size: 0.75rem; /* 减小字体大小 */
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 1px; /* 减小边距 */
+}
+
+.history-episode {
+    color: #3b82f6;
+}
+
+.history-source {
+    color: #10b981;
+}
+
+.history-time {
+    color: #888;
+    font-size: 0.7rem; /* 减小字体大小 */
+    margin-top: 1px; /* 减小顶部边距 */
+}
+
+.history-separator {
+    color: #666;
+}
+
+.history-thumbnail {
+    width: 100%;
+    height: 90px;
+    background-color: #222;
+    overflow: hidden;
+}
+
+.history-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.history-info {
+    padding: 10px;
+}
+
+.history-time {
+    color: #888;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.history-title {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 添加播放进度条样式 */
+.history-progress {
+    margin: 5px 0;
+}
+
+.progress-bar {
+    height: 3px;
+    background-color: rgb(255 255 255 / 65%);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 2px;
+}
+
+.progress-filled {
+    height: 100%;
+    background: linear-gradient(to right, #00ccff, #3b82f6);
+    border-radius: 2px;
+}
+
+.progress-text {
+    font-size: 10px;
+    color: #888;
+    text-align: right;
+}
+
+/* 添加恢复播放提示样式 */
+.position-restore-hint {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: 100;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.position-restore-hint.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }

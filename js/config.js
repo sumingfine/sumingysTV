@@ -1,6 +1,6 @@
 // 全局常量配置
 
-const PROXY_URL = 'https://cors.533133.xyz/';
+const PROXY_URL = 'https://cors.zme.ink/';
 const HOPLAYER_URL = 'https://hoplayer.com/index.html';
 const SEARCH_HISTORY_KEY = 'videoSearchHistory';
 const MAX_HISTORY_ITEMS = 5;
@@ -112,6 +112,11 @@ const API_SITES = {
         name: '黄色仓库',
         adult: true,
         detail: 'https://hsckzy.vip' // 添加detail URL以便特殊处理
+    },
+    fqzy: {
+        api: 'https://fqzy2.me',
+        name: '番茄9kg资源',
+        detail: 'https://fqzy2.me' // 详情页基础 URL
     }
 };
 
@@ -196,4 +201,4 @@ const CUSTOM_API_CONFIG = {
 };
 
 // 新增隐藏内置黄色采集站API的变量，默认为true
-const HIDE_BUILTIN_ADULT_APIS = true;
+const HIDE_BUILTIN_ADULT_APIS = false;

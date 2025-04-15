@@ -65,7 +65,7 @@ function initAPICheckboxes() {
 
     // 添加普通API组标题
     const normalTitle = document.createElement('div');
-    normalTitle.className = 'api-group-title text-white';
+    normalTitle.className = 'api-group-title';
     normalTitle.textContent = '普通资源';
     container.appendChild(normalTitle);
     
@@ -83,7 +83,7 @@ function initAPICheckboxes() {
                    class="form-checkbox h-3 w-3 text-blue-600 bg-[#222] border border-[#333]" 
                    ${checked ? 'checked' : ''} 
                    data-api="${apiKey}">
-            <label for="api_${apiKey}" class="ml-1 text-xs text-white truncate 123">${api.name}</label>
+            <label for="api_${apiKey}" class="ml-1 text-xs text-gray-400 truncate">${api.name}</label>
         `;
         container.appendChild(checkbox);
         
@@ -120,7 +120,7 @@ function initAPICheckboxes() {
                        class="form-checkbox h-3 w-3 text-blue-600 bg-[#222] border border-[#333] api-adult" 
                        ${checked ? 'checked' : ''} 
                        data-api="${apiKey}">
-                <label for="api_${apiKey}" class="ml-1 text-xs text-white truncate">${api.name}</label>
+                <label for="api_${apiKey}" class="ml-1 text-xs text-pink-400 truncate">${api.name}</label>
             `;
             container.appendChild(checkbox);
             
@@ -709,34 +709,44 @@ async function search() {
                     <div class="md:flex">
                         ${hasCover ? `
                         <div class="md:w-1/4 relative overflow-hidden">
-                            <div class="w-full h-60 md:h-full">
+                            <div class="w-full h-40 md:h-full">
                                 <img src="${item.vod_pic}" alt="${safeName}" 
                                      class="w-full h-full object-cover transition-transform hover:scale-110" 
                                      onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450?text=无封面'; this.classList.add('object-contain');" 
                                      loading="lazy">
                                 <div class="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent opacity-60"></div>
                             </div>
-                            ${sourceInfo ? `<div class="absolute top-2 right-2 bg-[#222] px-2 py-1 rounded text-xs text-white sm:block lg:hidden">${sourceInfo}</div>` : '<div></div>'}
-                                <p class="sm:block lg:hidden absolute bottom-2 left-2 bg-[#222] px-2 py-1 rounded text-xs text-white">
-                                    ${(item.vod_remarks || '暂无介绍').toString().replace(/</g, '&lt;')}
-                                </p>
                         </div>` : ''}
-                    
-                        <!-- 内容区域 - 减小内边距 -->
+                        
                         <div class="p-3 flex flex-col flex-grow ${hasCover ? 'md:w-3/4' : 'w-full'}">
                             <div class="flex-grow">
-                                <h3 class="text-base font-semibold mb-2 line-clamp-2 text-black">${safeName}</h3>
+                                <h3 class="text-lg font-semibold mb-2 break-words">${safeName}</h3>
                                 
-                                <!-- 添加影片元数据 - 使用原始彩色标签样式，但减小间距 -->
                                 <div class="flex flex-wrap gap-1 mb-2">
                                     ${(item.type_name || '').toString().replace(/</g, '&lt;') ? 
-                                      `<span class="text-xs py-0.5 px-1.5 rounded bg-[#0076d6] text-white">
+                                      `<span class="text-xs py-0.5 px-1.5 rounded bg-opacity-20 bg-blue-500 text-blue-300">
                                           ${(item.type_name || '').toString().replace(/</g, '&lt;')}
                                       </span>` : ''}
                                     ${(item.vod_year || '') ? 
-                                      `<span class="text-xs py-0.5 px-1.5 rounded bg-[#eab8d1] text-white">
+                                      `<span class="text-xs py-0.5 px-1.5 rounded bg-opacity-20 bg-purple-500 text-purple-300">
                                           ${item.vod_year}
                                       </span>` : ''}
+                                </div>
+                                <p class="text-gray-400 text-xs h-9 overflow-hidden">
+                                    ${(item.vod_remarks || '暂无介绍').toString().replace(/</g, '&lt;')}
+                                </p>
+                            </div>
+                            
+                            <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-800">
+                                ${sourceInfo ? `<div>${sourceInfo}</div>` : '<div></div>'}
+                                <div>
+                                    <span class="text-xs text-gray-500 flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        点击播放
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -818,15 +828,15 @@ async function showDetails(id, vod_name, sourceCode) {
             currentEpisodes = safeEpisodes;
             episodesReversed = false; // 默认正序
             modalContent.innerHTML = `
-                <div class="flex justify-end mb-2" style="margin-top:2rem">
-                    <button onclick="toggleEpisodeOrder()" class="px-4 py-2 bg-[#8785a2] text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center space-x-2">
+                <div class="flex justify-end mb-2">
+                    <button onclick="toggleEpisodeOrder()" class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center space-x-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd" />
                         </svg>
                         <span>倒序排列</span>
                     </button>
                 </div>
-                <div id="episodesGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                <div id="episodesGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
                     ${renderEpisodes(vod_name)}
                 </div>
             `;
@@ -925,7 +935,7 @@ function renderEpisodes(vodName) {
         const realIndex = episodesReversed ? currentEpisodes.length - 1 - index : index;
         return `
             <button id="episode-${realIndex}" onclick="playVideo('${episode}','${vodName.replace(/"/g, '&quot;')}', ${realIndex})" 
-                    class="px-4 py-2 bg-[#8785a2] hover:bg-[#8785a2] border border-[#333] rounded-lg transition-colors text-center episode-btn">
+                    class="px-4 py-2 bg-[#222] hover:bg-[#333] border border-[#333] rounded-lg transition-colors text-center episode-btn">
                 第${realIndex + 1}集
             </button>
         `;
@@ -951,3 +961,15 @@ function toggleEpisodeOrder() {
         }
     }
 }
+
+// app.js 或路由文件中
+const authMiddleware = require('./middleware/auth');
+const config = require('./config');
+
+// 对所有请求启用鉴权（按需调整作用范围）
+if (config.auth.enabled) {
+  app.use(authMiddleware);
+}
+
+// 或者针对特定路由
+app.use('/api', authMiddleware);

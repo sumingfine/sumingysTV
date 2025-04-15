@@ -1,14 +1,14 @@
 // 全局常量配置
 
 const PROXY_URL = 'https://cors.533133.xyz/';
-const HOPLAYER_URL = '';
+const HOPLAYER_URL = 'https://hoplayer.com/index.html';
 const SEARCH_HISTORY_KEY = 'videoSearchHistory';
 const MAX_HISTORY_ITEMS = 5;
 
 // 网站信息配置
 const SITE_CONFIG = {
     name: '宿命影视',
-    url: 'https://sumingys.top',
+    url: 'https://www.sumingys.top',
     description: '免费在线视频搜索与观看平台',
     logo: 'https://images.icon-icons.com/38/PNG/512/retrotv_5520.png',
     version: '1.0.0'
@@ -46,6 +46,10 @@ const API_SITES = {
     cjhw: {
         api: 'https://cjhwba.com',
         name: '新华为',
+    },
+    hwba: {
+        api: 'https://cjwba.com',
+        name: '华为吧资源',
     },
     jisu: {
         api: 'https://jszyapi.com',

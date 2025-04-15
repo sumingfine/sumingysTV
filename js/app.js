@@ -887,7 +887,7 @@ function playVideo(url, vod_name, episodeIndex = 0) {
     }
     
     // 构建播放页面URL，传递必要参数
-    const playerUrl = `player.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(videoTitle)}&index=${episodeIndex}&source=${encodeURIComponent(sourceName)}`;
+    const playerUrl = `/player.html`;
     
     // 在新标签页中打开播放页面
     window.open(playerUrl, '_blank');

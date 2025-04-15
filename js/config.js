@@ -1,6 +1,6 @@
 // 全局常量配置
 
-const PROXY_URL = 'https://cors.zme.ink/';
+const PROXY_URL = 'https://cors.533133.xyz/';
 const HOPLAYER_URL = '';
 const SEARCH_HISTORY_KEY = 'videoSearchHistory';
 const MAX_HISTORY_ITEMS = 5;

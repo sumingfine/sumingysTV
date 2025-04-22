@@ -125,7 +125,6 @@ const API_SITES = {
         api: 'https://fqzy2.me',
         name: '番茄9kg资源',
         adult: true,
-        detail: 'https://fqzy2.me' // 详情页基础 URL
     }
     // 您可以按需添加更多源
 };
